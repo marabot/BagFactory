@@ -37,9 +37,8 @@ contract Bag{
         }      
 
         address owner; 
-        address vaultMainAddr;             
-       
-    
+        address BagMainAddr;             
+          
         ////////// CONSTRUCTOR ////////////
         constructor(uint _id,string memory _name, address _from, address _bagMain, bytes32[] memory  _tokensTickers, address[] memory _tokensAddress ){
             for(uint i=0;i<_tokensTickers.length;i++)
@@ -51,7 +50,7 @@ contract Bag{
            
             name = _name; 
             id=_id;       
-            vaultMainAddr = _bagMain;  
+            BagMainAddr = _bagMain;  
             sValueFeed = ISupraSValueFeed(0xa64E1313B6e104f2A3A14D0962CEB32acAA72012);
              
         }
@@ -64,7 +63,7 @@ contract Bag{
 
           for (uint i = 0 ; i < tokenList.length;i++)
           {
-
+            
 
           }
 
@@ -134,7 +133,7 @@ contract Bag{
         function addToken (
             bytes32 ticker,
             address tokenAddress)           
-            onlyVaultMain
+            onlyBagMain
             external {
             tokens[ticker] = VaultStruct.Token(ticker, tokenAddress);
             tokenList.push(ticker);
@@ -174,8 +173,8 @@ contract Bag{
             _;
         }
 
-         modifier onlyVaultMain() {
-            require(msg.sender == vaultMainAddr, 'only VaultMain');
+         modifier onlyBagMain() {
+            require(msg.sender == BagMainAddr, 'only BagMain');
             _;
         }
 

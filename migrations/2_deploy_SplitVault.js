@@ -1,7 +1,9 @@
 const SplitVault = artifacts.require("SplitVault.sol");
 const VaultFactory = artifacts.require('VaultFactory.sol');
-const VaultMain = artifacts.require('VaultMain.sol');
+const BagMain = artifacts.require('BagMain.sol');
 const Dai = artifacts.require("Mocks/Dai.sol")
+const Pep = artifacts.require("Mocks/PEp.sol")
+const Side = artifacts.require("Mocks/Side.sol")
 
 
 const DAI = web3.utils.fromAscii('DAI');
@@ -11,14 +13,21 @@ module.exports =async function (deployer, _network, accounts) {
     const eth = 10^18;
     const [ trader1, trader2, trader3,trader4,_]= accounts;   
 
+    
+    await deployer.deploy(Dai);
+    const dai = await Dai.deployed();
+
+    await deployer.deploy(Pep);
+    const pep = await Dai.deployed();
+
+    await deployer.deploy(Side);
+    const side = await Dai.deployed();
   
-    await deployer.deploy(VaultFactory); 
-    const vaultFactory = await VaultFactory.deployed()
+    await deployer.deploy(BagMain,["dai", "pep", "side"],[dai.address,pep.address,side.address]); 
+    const bagFactory = await BagMain.deployed()
 
    
 
-    await deployer.deploy(VaultMain, vaultFactory.address); 
-    const vaultMain = await VaultMain.deployed()
 /*
     await deployer.deploy(Dai);
     const dai = await Dai.deployed();

@@ -73,7 +73,7 @@ module.exports = {
   contracts_build_directory: path.join(__dirname, "client/src/contracts"),
   compilers: {
     solc: {
-      version: '0.8.0',
+      version: '0.8.19',
       optimizer: {
         enabled: true,
         runs: 1

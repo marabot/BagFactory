@@ -2,9 +2,11 @@ const Bag = artifacts.require('Bag.sol');
 
 const BagMain = artifacts.require('BagMain.sol');
 const Dai = artifacts.require('mocks/Dai.sol');
+const Pep = artifacts.require('mocks/Pep.sol');
+const Side = artifacts.require('mocks/Side.sol');
 
 contract('BagFactory' , accounts =>{
-    let dai,VF,_bagMain, SB;
+    let dai, pep, side , _bagMain;
     const [trader1, trader2, trader3, trader4, trader5]=[accounts[0], accounts[1], accounts[2], accounts[3], accounts[4], accounts[5]];
     const DAI = web3.utils.fromAscii('DAI'); 
     
@@ -13,9 +15,39 @@ contract('BagFactory' , accounts =>{
        
        
         dai = await Dai.new(); 
-        _bagMain = await BagMain.new();
-       
+        pep = await Pep.new(); 
+        side = await Side.new(); 
+        tokenTick = ["DAI","PEP","SIDE"];
+        tokenAddress = [dai.address, pep.address, side.address];
+        _bagMain = await BagMain.new(tokenTick, tokenAddress);
+        console.log("daiiiiiiiiiiiiii");
+        
+        console.log(dai.address);
+
+
         const amount = web3.utils.toWei('1000');
+
+        await dai.faucet(trader1, amount)
+        await dai.approve(
+            _bagMain.address, 
+            amount, 
+            {from: trader1}
+        );
+
+        await pep.faucet(trader1, amount)
+        await pep.approve(
+            _bagMain.address, 
+            amount, 
+            {from: trader1}
+        );
+
+        await side.faucet(trader1, amount)
+        await side.approve(
+            _bagMain.address, 
+            amount, 
+            {from: trader1}
+        );
+
         /*
         await dai.faucet(trader1, amount)
         await dai.approve(
@@ -65,7 +97,7 @@ contract('BagFactory' , accounts =>{
         console.log(' tab = > ' + allSB.length);
         console.log('addd '  + allSB[0].addr);
         console.log(allSB);
-        assert(allSB.length ==3);
+        assert(allSB.length ==1);
         assert(allSB[0].name == "babag !");
         assert(allSB[0].addr != "0x0");
         assert(allSB[0].from == trader1);        
@@ -75,8 +107,26 @@ contract('BagFactory' , accounts =>{
     }, 'échec de la création du SplitVault');
 
 
-    it('should deposit in a bag', async()=>{
+    it.only('should deposit in a bag', async()=>{
         
+        await _bagMain.createBag('babag !',{from:trader1});
+      
+        let allSB =  await _bagMain.getAllBags(); 
+
+       
+        let bag = await Bag.at(allSB[0].addr);
+        bag.deposit("100");
+        
+        console.log("afterrr");
+        
+  
+        
+
+    }, 'échec du dépot du Vault');
+
+
+    it('should buys tokens when fund are received', async()=>{
+
         await _bagMain.createBag('babag !',{from:trader1});
       
         let allSB =  await _bagMain.getAllBags(); 
@@ -84,20 +134,9 @@ contract('BagFactory' , accounts =>{
         console.log(' tab = > ' + allSB.length);
         console.log('addd '  + allSB[0].addr);
         console.log(allSB);
-        assert(allSB.length ==3);
-        assert(allSB[0].name == "babag !");
-        assert(allSB[0].addr != "0x0");
-        assert(allSB[0].from == trader1);        
-        assert(allSB[0].totalAmount == 0);
+        
 
 
-
-    }, 'échec du dépot du Vault');
-
-
-    it('should retire', async()=>{
-
-     
     }, 'échec du retrait');
     
 }

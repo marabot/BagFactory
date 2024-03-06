@@ -6,7 +6,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import './Bag.sol';
 import './libraries/VaultStruct.sol';
 
-contract VaultMain{
+contract BagMain{
         
         //Splits & Vaults par owner
       
@@ -31,14 +31,13 @@ contract VaultMain{
         event TipVaultWithdraw(address indexed _from);
 
         
-        constructor(){
+        constructor(string[] memory _tokenTicks, address[] memory _tokenAdresses){
             admin= msg.sender;     
               
         }
 
         // TODO prendre en paramètres une liste de token et TOP combien avoir pour composition du bag  
-        function createBag(string memory _name) payable external returns(address){               
-            
+        function createBag(string memory _name) payable external returns(address){      
          
             bytes32[] memory tokensTickers = new bytes32[](tokenList.length);
             address[] memory tokensAddress = new address[](tokenList.length);
@@ -49,7 +48,6 @@ contract VaultMain{
 
             nextBagId++;
             Bag newbag = new Bag(nextBagId,_name,msg.sender, address(this), tokensTickers,tokensAddress);
-
 
             address[] storage tp = bagsByOwner[msg.sender];
             tp.push(address(newbag));
