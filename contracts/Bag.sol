@@ -77,12 +77,23 @@ contract Bag{
 
           for (uint i = 0 ; i < tokenList.length;i++)
           {
-            swapExactInputSingle(part, tokens[tokenList[i]].tokenAddress);
+            swapExactInputSingle(part, USDC,tokens[tokenList[i]].tokenAddress);
+          }
+        }        
+
+        function retire() external payable onlyOwner {
+           // TODO
+           
+           // Buy equal part of all tokens        
+          for (uint i = 0 ; i < tokenList.length;i++)
+          {
+            uint _amount = ERC20(tokens[tokenList[i]].tokenAddress).balanceOf(this.address);
+            swapExactInputSingle(part, tokens[tokenList[i]].tokenAddress,USDC);
           }
         }        
              
 
-        function swapExactInputSingle(uint256 _amountIn, address _token) internal returns (uint256 amountOut) {
+        function swapExactInputSingleFromUSDC(uint256 _amountIn, address _tokenToSell, address _tokenToBuy) internal returns (uint256 amountOut) {
         // msg.sender must approve this contract
 
         // Transfer the specified amount of USDC to this contract.
@@ -97,8 +108,8 @@ contract Bag{
 
         ISwapRouter.ExactInputSingleParams memory params =
             ISwapRouter.ExactInputSingleParams({
-                tokenIn: USDC,
-                tokenOut: _token,
+                tokenIn: _tokenToSell,
+                tokenOut: _tokenToBuy,
                 fee: poolFee,
                 recipient: msg.sender,
                 deadline: block.timestamp,
