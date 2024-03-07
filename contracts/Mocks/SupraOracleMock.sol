@@ -1,7 +1,7 @@
 pragma solidity 0.8.19;
 
 import './../libraries/VaultStruct.sol';
-import './../libraries/supraOraclesStruct.sol';
+import './../libraries/ISupraSValueFeed.sol';
 
 contract SupraOracleMock{
 
@@ -9,28 +9,47 @@ contract SupraOracleMock{
     function getSvalue(uint256 _pairIndex)
         external 
         view
-        returns (priceFeed memory){
+        returns (ISupraSValueFeed.priceFeed memory){
             if (_pairIndex == 7){
-                return new pricefeed(2,5,10,11);
+
+               /* ISupraSValueFeed.priceFeed pfRet = ISupraSValueFeed.priceFeed({
+                    round : 2,
+                    decimals : 18,
+                    time : 10,
+                    price : 11
+                    
+                    });      */   
+
+                return ISupraSValueFeed.priceFeed({
+                    round : 2,
+                    decimals : 18,
+                    time : 10,
+                    price : 11
+                    
+                    });               
             }   
         }
 
-
+ struct Tip{    
+            address from; 
+            address vaultFor;               
+            uint amount;                              
+        }           
 
     //Function to fetch the data for a multiple data pairs
     function getSvalues(uint256[] memory _pairIndexes)
         external
         view
-        returns (priceFeed[] memory){
+        returns (ISupraSValueFeed.priceFeed[] memory){
 
-            priceFeed p1 =  new pricefeed(2,5,10,11);
-            priceFeed p2 =  new pricefeed(1,6,10,12);
-            priceFeed p3 =  new pricefeed(2,5,10,15);
+           // ISupraSValueFeed.priceFeed memory p1 =  ISupraSValueFeed.priceFeed(2,5,10,11);
+           // ISupraSValueFeed.priceFeed memory p2 =  ISupraSValueFeed.priceFeed(1,6,10,12);
+           // ISupraSValueFeed.priceFeed memory p3 =  ISupraSValueFeed.priceFeed(2,5,10,15);
 
-            priceFeed[] pRet = new priceFeed[3];
-            pRet[0] = p1;
-            pRet[1] = p2;
-            pRet[2] = p3;
+            ISupraSValueFeed.priceFeed[] memory pRet;
+            //pRet.push(p1);
+            //pRet.push(p2);
+            //pRet.push(p3);
             
             return pRet;
         }
@@ -42,7 +61,7 @@ contract SupraOracleMock{
         uint256 operation)
         external
         view
-        returns (derivedData memory){
+        returns (ISupraSValueFeed.derivedData memory){
 
 
         }

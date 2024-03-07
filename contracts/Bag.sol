@@ -5,7 +5,7 @@ pragma abicoder v2;
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import './libraries/VaultStruct.sol';
 
-import './libraries/supraOraclesStruct.sol';
+import './libraries/ISupraSValueFeed.sol';
 
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
 //import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
@@ -18,9 +18,12 @@ contract Bag{
         mapping(address => VaultStruct.Tip) Tips;
         ISupraSValueFeed internal sValueFeed;
 
+        address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+        address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+        address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
         
         // make router inherit instead of a constructor parameter
-        ISwapRouter public  swapRouter;
+        address public swapRouter;
 
         string name;
         uint totalAmount;  
@@ -74,13 +77,39 @@ contract Bag{
 
           for (uint i = 0 ; i < tokenList.length;i++)
           {
-            
-
+            swapExactInputSingle(part, tokens[tokenList[i]].tokenAddress);
           }
-
         }        
+             
 
-       
+        function swapExactInputSingle(uint256 _amountIn, address _token) internal returns (uint256 amountOut) {
+        // msg.sender must approve this contract
+
+        // Transfer the specified amount of USDC to this contract.
+        TransferHelperMock.safeTransferFrom(USDC, msg.sender, address(this), _amountIn);
+
+        // Approve the router to spend USDC.
+        TransferHelperMock.safeApprove(USDC, address(swapRouter), _amountIn);
+
+        // Naively set amountOutMinimum to 0. In production, use an oracle or other data source to choose a safer value for amountOutMinimum.
+        // We also set the sqrtPriceLimitx96 to be 0 to ensure we swap our exact input amount.
+        uint24 poolFee = 3000;
+
+        ISwapRouter.ExactInputSingleParams memory params =
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: USDC,
+                tokenOut: _token,
+                fee: poolFee,
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: _amountIn,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            });
+
+        // The call to `exactInputSingle` executes the swap.
+        amountOut = ISwapRouter(swapRouter).exactInputSingle(params);
+        }
 
         // requesting s-values for multiple pairs
         function getPriceForMultiplePair(uint256[] memory _pairIndexes) 

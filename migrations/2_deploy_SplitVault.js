@@ -4,7 +4,9 @@ const BagMain = artifacts.require('BagMain.sol');
 const Dai = artifacts.require("Mocks/Dai.sol")
 const Pep = artifacts.require("Mocks/PEp.sol")
 const Side = artifacts.require("Mocks/Side.sol")
-
+const SupraOracleMock = artifacts.require('mocks/supraOracleMock.sol');
+const SwapRouterMock = artifacts.require('mocks/SwapRouterMock.sol');
+const TransferHelperMock = artifacts.require('libraries/TransferHelper.sol');
 
 const DAI = web3.utils.fromAscii('DAI');
 
@@ -22,8 +24,14 @@ module.exports =async function (deployer, _network, accounts) {
 
     await deployer.deploy(Side);
     const side = await Dai.deployed();
+
+    await deployer.deploy(SwapRouterMock);
+    const swapRouterMock = await Dai.deployed();
+
+    await deployer.deploy(SupraOracleMock);
+    const supraOracleMock = await Dai.deployed();
   
-    await deployer.deploy(BagMain,["dai", "pep", "side"],[dai.address,pep.address,side.address]); 
+    await deployer.deploy(BagMain,["dai", "pep", "side"],[dai.address,pep.address,side.address],swapRouterMock.address, supraOracleMock.address); 
     const bagFactory = await BagMain.deployed()
 
    

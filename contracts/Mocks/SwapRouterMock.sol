@@ -6,7 +6,7 @@ import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
 
 contract SwapRouterMock {
    
-        function exactInputSingle(ExactInputSingleParams  params)
+        function exactInputSingle(ISwapRouter.ExactInputSingleParams memory  params)
         external payable returns (uint256 amountOut)
         {
             return 15;

@@ -6,10 +6,10 @@ const Pep = artifacts.require('mocks/Pep.sol');
 const Side = artifacts.require('mocks/Side.sol');
 const SupraOracleMock = artifacts.require('mocks/supraOracleMock.sol');
 const SwapRouterMock = artifacts.require('mocks/SwapRouterMock.sol');
-const TransferHelperMock = artifacts.require('mocks/TransferHelperMock.sol');
+const TransferHelperMock = artifacts.require('libraries/TransferHelper.sol');
 
 contract('BagFactory' , accounts =>{
-    let dai, pep, side , _bagMain, _swapRouterMock, _TranferHelperMock, _SupraOracleMock;
+    let dai, pep, side , _bagMain, _swapRouterMock, _TranferHelperMock, _supraOracleMock;
     const [trader1, trader2, trader3, trader4, trader5]=[accounts[0], accounts[1], accounts[2], accounts[3], accounts[4], accounts[5]];
     const DAI = web3.utils.fromAscii('DAI'); 
     
@@ -22,7 +22,7 @@ contract('BagFactory' , accounts =>{
         side = await Side.new(); 
 
         _swapRouterMock = await SwapRouterMock.new();
-        _SupraOracleMock = await SupraOracleMock.new();
+        _supraOracleMock = await SupraOracleMock.new();
         tokenTick = ["DAI","PEP","SIDE"];
         tokenAddress = [dai.address, pep.address, side.address];
         _bagMain = await BagMain.new(tokenTick, tokenAddress,_swapRouterMock.address, _supraOracleMock.address);
