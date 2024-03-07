@@ -8,7 +8,8 @@ import './libraries/VaultStruct.sol';
 import './libraries/supraOraclesStruct.sol';
 
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
-import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
+//import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
+import './libraries/TransferHelper.sol';
 
 
 contract Bag{
@@ -40,7 +41,16 @@ contract Bag{
         address BagMainAddr;             
           
         ////////// CONSTRUCTOR ////////////
-        constructor(uint _id,string memory _name, address _from, address _bagMain, bytes32[] memory  _tokensTickers, address[] memory _tokensAddress ){
+        constructor(
+            uint _id,
+            string memory _name,
+            address _from,
+            address _bagMain,
+            bytes32[] memory  _tokensTickers,
+            address[] memory _tokensAddress,
+            address _swapRouter, 
+            address _supraOracle
+             ){
             for(uint i=0;i<_tokensTickers.length;i++)
             {                
                  tokens[_tokensTickers[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i]);
@@ -51,7 +61,8 @@ contract Bag{
             name = _name; 
             id=_id;       
             BagMainAddr = _bagMain;  
-            sValueFeed = ISupraSValueFeed(0xa64E1313B6e104f2A3A14D0962CEB32acAA72012);
+            sValueFeed = ISupraSValueFeed(_supraOracle);
+            swapRouter = _swapRouter;
              
         }
         

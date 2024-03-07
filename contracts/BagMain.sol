@@ -18,7 +18,8 @@ contract BagMain{
         Bag[] allBags;
                                    
         address admin;       
-
+        address swapRouter;
+        address supraOracle;
         uint nextBagId;  
 
         // Tokens
@@ -31,9 +32,10 @@ contract BagMain{
         event TipVaultWithdraw(address indexed _from);
 
         
-        constructor(string[] memory _tokenTicks, address[] memory _tokenAdresses){
+        constructor(string[] memory _tokenTicks, address[] memory _tokenAdresses, address _swapRouter, address _supraOracle){
             admin= msg.sender;     
-              
+            swapRouter = _swapRouter;
+            supraOracle = _supraOracle;
         }
 
         // TODO prendre en paramètres une liste de token et TOP combien avoir pour composition du bag  
@@ -47,7 +49,7 @@ contract BagMain{
             }
 
             nextBagId++;
-            Bag newbag = new Bag(nextBagId,_name,msg.sender, address(this), tokensTickers,tokensAddress);
+            Bag newbag = new Bag(nextBagId,_name,msg.sender, address(this), tokensTickers, tokensAddress, swapRouter, supraOracle);
 
             address[] storage tp = bagsByOwner[msg.sender];
             tp.push(address(newbag));

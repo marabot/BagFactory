@@ -1,6 +1,6 @@
  pragma solidity 0.8.19;
  
- contract TransferHelperMock {
+ library TransferHelperMock {
 
 
     function safeTransferFrom(
