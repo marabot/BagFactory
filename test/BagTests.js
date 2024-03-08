@@ -1,17 +1,21 @@
 const Bag = artifacts.require('Bag.sol');
+const truffleAssert = require('truffle-assertions');
 
 const BagMain = artifacts.require('BagMain.sol');
 const Dai = artifacts.require('mocks/Dai.sol');
 const Pep = artifacts.require('mocks/Pep.sol');
 const Side = artifacts.require('mocks/Side.sol');
+const Ola = artifacts.require('mocks/Ola.sol');
+
 const SupraOracleMock = artifacts.require('mocks/supraOracleMock.sol');
 const SwapRouterMock = artifacts.require('mocks/SwapRouterMock.sol');
 const TransferHelperMock = artifacts.require('libraries/TransferHelper.sol');
 
 contract('BagFactory' , accounts =>{
-    let dai, pep, side , _bagMain, _swapRouterMock, _TranferHelperMock, _supraOracleMock;
+    let dai, pep, side , olas , _bagMain, _swapRouterMock, _TranferHelperMock, _supraOracleMock;
     const [trader1, trader2, trader3, trader4, trader5]=[accounts[0], accounts[1], accounts[2], accounts[3], accounts[4], accounts[5]];
     const DAI = web3.utils.fromAscii('DAI'); 
+    const OLA = web3.utils.fromAscii('OLA'); 
     
     
     beforeEach(async ()=>{
@@ -20,6 +24,8 @@ contract('BagFactory' , accounts =>{
         dai = await Dai.new(); 
         pep = await Pep.new(); 
         side = await Side.new(); 
+
+        olas = await Ola.new();
 
         _swapRouterMock = await SwapRouterMock.new();
         _supraOracleMock = await SupraOracleMock.new();
@@ -118,11 +124,10 @@ contract('BagFactory' , accounts =>{
 
        
         let bag = await Bag.at(allSB[0].addr);
-        bag.deposit("100");
-        
-        console.log("afterrr");
-        
-  
+        await truffleAssert.reverts(bag.deposit("100",olas.address),"Token not available");
+        bag.deposit("100",Dai.address);
+        console.log("after");
+         
         
 
     }, 'échec du dépot du Vault');

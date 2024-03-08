@@ -32,8 +32,14 @@ contract Bag{
         address[] tipsOwnersList;
         
         // Tokens
-        mapping(bytes32 => VaultStruct.Token) public tokens;
+        mapping(bytes32 => VaultStruct.Token) public tokensByTick;
+        mapping(address => VaultStruct.Token) public tokensByAddress;
+
         bytes32[] public tokenList;
+
+        uint[] public TokenPartsInUSDC;
+
+
 
         struct Token {
             bytes32 ticker;
@@ -56,7 +62,8 @@ contract Bag{
              ){
             for(uint i=0;i<_tokensTickers.length;i++)
             {                
-                 tokens[_tokensTickers[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i]);
+                 tokensByTick[_tokensTickers[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i]);
+                 tokensByAddress[_tokensAddress[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i]);
                  tokenList.push(_tokensTickers[i]);               
             }
             owner= _from; 
@@ -69,57 +76,68 @@ contract Bag{
              
         }
         
-        function deposit(uint _amount) external payable onlyOwner {
+        function deposit(uint _amount, address _token) external payable onlyOwner {
            // TODO
-           
+          
+           require(tokensByAddress[_token].tokenAddress != address(0x0) , "Token not available");
+
            // Buy equal part of all tokens 
           uint256 part = _amount / tokenList.length;
 
           for (uint i = 0 ; i < tokenList.length;i++)
-          {
-            swapExactInputSingle(part, USDC,tokens[tokenList[i]].tokenAddress);
+          {            
+            swapExactInputSingle(part, _token,tokensByTick[tokenList[i]].tokenAddress);
           }
         }        
 
-        function retire() external payable onlyOwner {
+        function retire(address _token) external payable onlyOwner {
            // TODO
-           
-           // Buy equal part of all tokens        
+           require(tokensByAddress[_token].tokenAddress !=address(0x0), "Token not available");
+           // sell all tokens        
           for (uint i = 0 ; i < tokenList.length;i++)
           {
-            uint _amount = ERC20(tokens[tokenList[i]].tokenAddress).balanceOf(this.address);
-            swapExactInputSingle(part, tokens[tokenList[i]].tokenAddress,USDC);
+            uint amount = IERC20(tokensByTick[tokenList[i]].tokenAddress).balanceOf(address(this));
+            swapExactInputSingle(amount, tokensByTick[tokenList[i]].tokenAddress,_token);
           }
-        }        
-             
+        }   
 
-        function swapExactInputSingleFromUSDC(uint256 _amountIn, address _tokenToSell, address _tokenToBuy) internal returns (uint256 amountOut) {
-        // msg.sender must approve this contract
+        function computeParts() internal returns (uint[] memory) {
+            // get all price
+            // get all amounts
+            uint[] memory ret;
+            // add all values / total values
+           
+            return ret;
+        }
 
-        // Transfer the specified amount of USDC to this contract.
-        TransferHelperMock.safeTransferFrom(USDC, msg.sender, address(this), _amountIn);
 
-        // Approve the router to spend USDC.
-        TransferHelperMock.safeApprove(USDC, address(swapRouter), _amountIn);
+        function swapExactInputSingle(uint256 _amountIn, address _tokenToSell, address _tokenToBuy) internal returns (uint256 amountOut) {
+            // msg.sender must approve this contract
 
-        // Naively set amountOutMinimum to 0. In production, use an oracle or other data source to choose a safer value for amountOutMinimum.
-        // We also set the sqrtPriceLimitx96 to be 0 to ensure we swap our exact input amount.
-        uint24 poolFee = 3000;
+            // Transfer the specified amount of USDC to this contract.
+            TransferHelperMock.safeTransferFrom(USDC, msg.sender, address(this), _amountIn);
 
-        ISwapRouter.ExactInputSingleParams memory params =
-            ISwapRouter.ExactInputSingleParams({
-                tokenIn: _tokenToSell,
-                tokenOut: _tokenToBuy,
-                fee: poolFee,
-                recipient: msg.sender,
-                deadline: block.timestamp,
-                amountIn: _amountIn,
-                amountOutMinimum: 0,
-                sqrtPriceLimitX96: 0
-            });
+            // Approve the router to spend USDC.
+            TransferHelperMock.safeApprove(USDC, address(swapRouter), _amountIn);
 
-        // The call to `exactInputSingle` executes the swap.
-        amountOut = ISwapRouter(swapRouter).exactInputSingle(params);
+            // Naively set amountOutMinimum to 0. In production, use an oracle or other data source to choose a safer value for amountOutMinimum.
+            // We also set the sqrtPriceLimitx96 to be 0 to ensure we swap our exact input amount.
+            uint24 poolFee = 3000;
+
+            ISwapRouter.ExactInputSingleParams memory params =
+                ISwapRouter.ExactInputSingleParams({
+                    tokenIn: _tokenToSell,
+                    tokenOut: _tokenToBuy,
+                    fee: poolFee,
+                    recipient: msg.sender,
+                    deadline: block.timestamp,
+                    amountIn: _amountIn,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: 0
+                });
+
+            // The call to `exactInputSingle` executes the swap.
+            amountOut = ISwapRouter(swapRouter).exactInputSingle(params);
         }
 
         // requesting s-values for multiple pairs
@@ -129,7 +147,6 @@ contract Bag{
             returns (ISupraSValueFeed.priceFeed[] memory) {
             return sValueFeed.getSvalues(_pairIndexes);
         }
-
 
         function getMarketCapsMultiplePair(address[] memory _tokensAdress)
             external 
@@ -155,18 +172,8 @@ contract Bag{
 
         }
 
-        function retire() onlyOwner external  returns (bool)  {  
-                    // TODO
-                    // require Only Owner
-                    // Sell all tokens and send to owner
-
-                 //  (bool success, bytes memory data)=  owner.call{value:totalAmount}();
-                                     
-                    
-                    return false;
-         }               
-    
-
+       
+   
         function getTokens() 
             external 
             view 
@@ -174,8 +181,8 @@ contract Bag{
             VaultStruct.Token[] memory _tokens = new VaultStruct.Token[](tokenList.length);
             for (uint i = 0; i < tokenList.length; i++) {
                 _tokens[i] = VaultStruct.Token(
-                tokens[tokenList[i]].ticker,
-                tokens[tokenList[i]].tokenAddress
+                tokensByTick[tokenList[i]].ticker,
+                tokensByTick[tokenList[i]].tokenAddress
                 );
             }
             return _tokens;
@@ -186,11 +193,9 @@ contract Bag{
             address tokenAddress)           
             onlyBagMain
             external {
-            tokens[ticker] = VaultStruct.Token(ticker, tokenAddress);
+            tokensByTick[ticker] = VaultStruct.Token(ticker, tokenAddress);
             tokenList.push(ticker);
-        }
-
-        
+        }      
        
         
         fallback() external payable {
@@ -207,7 +212,7 @@ contract Bag{
 
         modifier tokenExist(bytes32 ticker) {
             require(
-                tokens[ticker].tokenAddress != address(0),
+                tokensByTick[ticker].tokenAddress != address(0),
                 'this token does not exist'
             );
         _;
