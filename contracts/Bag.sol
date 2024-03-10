@@ -115,10 +115,10 @@ contract Bag{
             // msg.sender must approve this contract
 
             // Transfer the specified amount of USDC to this contract.
-            TransferHelperMock.safeTransferFrom(USDC, msg.sender, address(this), _amountIn);
+            TransferHelper.safeTransferFrom(USDC, msg.sender, address(this), _amountIn);
 
             // Approve the router to spend USDC.
-            TransferHelperMock.safeApprove(USDC, address(swapRouter), _amountIn);
+            TransferHelper.safeApprove(USDC, address(swapRouter), _amountIn);
 
             // Naively set amountOutMinimum to 0. In production, use an oracle or other data source to choose a safer value for amountOutMinimum.
             // We also set the sqrtPriceLimitx96 to be 0 to ensure we swap our exact input amount.

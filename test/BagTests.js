@@ -7,7 +7,7 @@ const Pep = artifacts.require('mocks/Pep.sol');
 const Side = artifacts.require('mocks/Side.sol');
 const Ola = artifacts.require('mocks/Ola.sol');
 
-const SupraOracleMock = artifacts.require('mocks/supraOracleMock.sol');
+const SupraOracleMock = artifacts.require('mocks/SupraOracleMock.sol');
 const SwapRouterMock = artifacts.require('mocks/SwapRouterMock.sol');
 const TransferHelperMock = artifacts.require('libraries/TransferHelper.sol');
 
@@ -19,8 +19,7 @@ contract('BagFactory' , accounts =>{
     
     
     beforeEach(async ()=>{
-       
-       
+              
         dai = await Dai.new(); 
         pep = await Pep.new(); 
         side = await Side.new(); 
@@ -125,7 +124,7 @@ contract('BagFactory' , accounts =>{
        
         let bag = await Bag.at(allSB[0].addr);
         await truffleAssert.reverts(bag.deposit("100",olas.address),"Token not available");
-        bag.deposit("100",Dai.address);
+        bag.deposit("100",dai.address);
         console.log("after");
          
         

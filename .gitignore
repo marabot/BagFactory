@@ -3,3 +3,5 @@ client/src/contracts
 client/node_modules
 package-lock.json
 yarn.lock
+cache/
+artifacts/

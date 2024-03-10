@@ -4,21 +4,21 @@ const BagMain = artifacts.require('BagMain.sol');
 const Dai = artifacts.require("Mocks/Dai.sol")
 const Pep = artifacts.require("Mocks/PEp.sol")
 const Side = artifacts.require("Mocks/Side.sol")
-const SupraOracleMock = artifacts.require('mocks/supraOracleMock.sol');
+const SupraOracleMock = artifacts.require('mocks/SupraOracleMock.sol');
 const SwapRouterMock = artifacts.require('mocks/SwapRouterMock.sol');
 const TransferHelperMock = artifacts.require('libraries/TransferHelper.sol');
 
 const DAI = web3.utils.fromAscii('DAI');
 
-module.exports =async function (deployer, _network, accounts) {
+module.exports = async function (deployer, _network, accounts) {
 
     const eth = 10^18;
     const [ trader1, trader2, trader3,trader4,_]= accounts;   
 
-    
-    await deployer.deploy(Dai);
+    /*
+    await deployer.deploy(Dai);    
     const dai = await Dai.deployed();
-
+   
     await deployer.deploy(Pep);
     const pep = await Dai.deployed();
 
@@ -33,6 +33,28 @@ module.exports =async function (deployer, _network, accounts) {
   
     await deployer.deploy(BagMain,["dai", "pep", "side"],[dai.address,pep.address,side.address],swapRouterMock.address, supraOracleMock.address); 
     const bagFactory = await BagMain.deployed()
+    */
+
+
+    const dai = await Dai.new();
+    Dai.setasDeployed(dai);
+    
+    const pep = await Pep.new();
+    Pep.setasDeployed(pep);
+    
+    const side = await Side.new();
+    Side.setasDeployed(side);
+    
+    const supraOracleMock = await SupraOracleMock.new();
+    SupraOracleMock.setasDeployed(supraOracleMock);
+    
+    const swapRouterMock = await SwapRouterMock.new();
+    SwapRouterMock.setasDeployed(swapRouterMock);
+
+    const bagMain = await BagMain.new(["dai", "pep", "side"],[dai.address,pep.address,side.address],swapRouterMock.address, supraOracleMock.address);
+    BagMain.setasDeployed(swapRouterMock);
+
+
 
    
 
