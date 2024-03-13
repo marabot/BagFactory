@@ -32,10 +32,16 @@ contract BagMain{
         event TipVaultWithdraw(address indexed _from);
 
         
-        constructor(string[] memory _tokenTicks, address[] memory _tokenAdresses, address _swapRouter, address _supraOracle){
+        constructor(bytes32[] memory _tokenTicks, address[] memory _tokenAdresses, address _swapRouter, address _supraOracle){
             admin= msg.sender;     
             swapRouter = _swapRouter;
             supraOracle = _supraOracle;
+
+             for(uint i=0;i<_tokenTicks.length;i++)
+            {                
+                 tokens[_tokenTicks[i]] = VaultStruct.Token(_tokenTicks[i], _tokenAdresses[i]);                
+                 tokenList.push(_tokenTicks[i]);               
+            }
         }
 
         // TODO prendre en paramètres une liste de token et TOP combien avoir pour composition du bag  

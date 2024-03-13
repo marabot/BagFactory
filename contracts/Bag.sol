@@ -8,9 +8,8 @@ import './libraries/VaultStruct.sol';
 import './libraries/ISupraSValueFeed.sol';
 
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
-//import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
-import './libraries/TransferHelper.sol';
-
+import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
+import "hardhat/console.sol";
 
 contract Bag{
 
@@ -37,9 +36,6 @@ contract Bag{
 
         bytes32[] public tokenList;
 
-        uint[] public TokenPartsInUSDC;
-
-
 
         struct Token {
             bytes32 ticker;
@@ -55,7 +51,7 @@ contract Bag{
             string memory _name,
             address _from,
             address _bagMain,
-            bytes32[] memory  _tokensTickers,
+            bytes32[] memory _tokensTickers,
             address[] memory _tokensAddress,
             address _swapRouter, 
             address _supraOracle
@@ -66,8 +62,7 @@ contract Bag{
                  tokensByAddress[_tokensAddress[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i]);
                  tokenList.push(_tokensTickers[i]);               
             }
-            owner= _from; 
-           
+            owner= _from;            
             name = _name; 
             id=_id;       
             BagMainAddr = _bagMain;  
@@ -77,16 +72,19 @@ contract Bag{
         }
         
         function deposit(uint _amount, address _token) external payable onlyOwner {
-           // TODO
-          
+                  
            require(tokensByAddress[_token].tokenAddress != address(0x0) , "Token not available");
-
-           // Buy equal part of all tokens 
-          uint256 part = _amount / tokenList.length;
-
+         
+           TransferHelper.safeTransferFrom(_token, msg.sender, address(this), _amount);        
+          
+          uint256  part = _amount / (tokenList.length-1);     
+       
           for (uint i = 0 ; i < tokenList.length;i++)
           {            
-            swapExactInputSingle(part, _token,tokensByTick[tokenList[i]].tokenAddress);
+            if (_token != tokensByTick[tokenList[i]].tokenAddress)
+            {
+                swapExactInputSingle(part, _token,tokensByTick[tokenList[i]].tokenAddress);
+            }           
           }
         }        
 
@@ -112,13 +110,9 @@ contract Bag{
 
 
         function swapExactInputSingle(uint256 _amountIn, address _tokenToSell, address _tokenToBuy) internal returns (uint256 amountOut) {
-            // msg.sender must approve this contract
-
-            // Transfer the specified amount of USDC to this contract.
-            TransferHelper.safeTransferFrom(USDC, msg.sender, address(this), _amountIn);
-
+                  
             // Approve the router to spend USDC.
-            TransferHelper.safeApprove(USDC, address(swapRouter), _amountIn);
+            TransferHelper.safeApprove(_tokenToSell, address(swapRouter), _amountIn);
 
             // Naively set amountOutMinimum to 0. In production, use an oracle or other data source to choose a safer value for amountOutMinimum.
             // We also set the sqrtPriceLimitx96 to be 0 to ensure we swap our exact input amount.
@@ -129,7 +123,7 @@ contract Bag{
                     tokenIn: _tokenToSell,
                     tokenOut: _tokenToBuy,
                     fee: poolFee,
-                    recipient: msg.sender,
+                    recipient: address(this),
                     deadline: block.timestamp,
                     amountIn: _amountIn,
                     amountOutMinimum: 0,
@@ -138,6 +132,13 @@ contract Bag{
 
             // The call to `exactInputSingle` executes the swap.
             amountOut = ISwapRouter(swapRouter).exactInputSingle(params);
+
+            console.log(
+                "amount out  %s  %s from %s",
+                amountOut,
+                _tokenToBuy,
+                _tokenToSell
+            );
         }
 
         // requesting s-values for multiple pairs
@@ -171,7 +172,6 @@ contract Bag{
             return address(this).balance;
 
         }
-
        
    
         function getTokens() 
@@ -199,8 +199,10 @@ contract Bag{
        
         
         fallback() external payable {
-            require(msg.data.length == 0);
+            //require(msg.data.length == 0);
         }
+
+        receive() external payable {}
         
         // TODO : retourner plus d'infos sur la composition du bag
         function getBag() external view returns(VaultStruct.Bag memory){

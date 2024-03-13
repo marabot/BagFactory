@@ -6,7 +6,7 @@ const Pep = artifacts.require("Mocks/PEp.sol")
 const Side = artifacts.require("Mocks/Side.sol")
 const SupraOracleMock = artifacts.require('mocks/SupraOracleMock.sol');
 const SwapRouterMock = artifacts.require('mocks/SwapRouterMock.sol');
-const TransferHelperMock = artifacts.require('libraries/TransferHelper.sol');
+//const TransferHelperMock = artifacts.require('@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol');
 
 const DAI = web3.utils.fromAscii('DAI');
 
@@ -51,60 +51,11 @@ module.exports = async function (deployer, _network, accounts) {
     const swapRouterMock = await SwapRouterMock.new();
     SwapRouterMock.setasDeployed(swapRouterMock);
 
-    const bagMain = await BagMain.new(["dai", "pep", "side"],[dai.address,pep.address,side.address],swapRouterMock.address, supraOracleMock.address);
-    BagMain.setasDeployed(swapRouterMock);
+    const WETHAddr= "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
+    const DAIAddr= "0x6B175474E89094C44Da98b954EedeAC495271d0F";
+    const LINKAddrr= "0x514910771af9ca656af840dff83e8264ecf986ca";
 
 
-
-   
-
-/*
-    await deployer.deploy(Dai);
-    const dai = await Dai.deployed();
-    
-    
-    await vaultMain.addToken(DAI,dai.address);
-    const r = await vaultMain.getTokens();
-    console.log('tokens =>' + r);
-    
-    const amount = web3.utils.toWei('1000');
-    await dai.faucet(trader1, amount)
-    await dai.approve(
-      VaultMain.address, 
-      amount, 
-      {from: trader1}
-    );   
-
-    await dai.faucet( trader2, amount)
-    await dai.approve(
-      VaultMain.address, 
-      amount, 
-      {from: trader2}
-    );   
-
-    
-
-    await dai.faucet(trader3, amount)
-    await dai.approve(
-      VaultMain.address, 
-      amount, 
-      {from: trader3}
-    );   
-
-    await dai.faucet(trader4, amount)
-    await dai.approve(
-      VaultMain.address, 
-      amount, 
-      {from: trader4}
-    );   
-*/
-  //  const amount2 = web3.utils.toWei("50");
-/*
-    await Spb.createSplitVault('Help for all', {from:trader1}); 
-    await Spb.createSplitVault('nom test', {from:trader4});   
-    await Spb.deposit(0, 190, {from:trader2}); 
-    await Spb.deposit(0, 350, {from:trader3}); 
-    await Spb.deposit(0, 250, {from:trader4});   
-    await Spb.closeSubSplitVault(0, {from:trader1});*/
-
+    const bagMain = await BagMain.new(["WETH","DAI", "LINK"],[WETHAddr,DAIAddr,LINKAddrr],swaprouter, supraOracleMock.address);
+    BagMain.setasDeployed(bagMain);
 }
