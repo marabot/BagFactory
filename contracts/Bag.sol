@@ -187,10 +187,27 @@ contract Bag{
         function addToken (
             bytes32 ticker,
             address tokenAddress)           
-            onlyBagMain
-            external {
+            onlyOwner
+            external {                 
             tokensByTick[ticker] = VaultStruct.Token(ticker, tokenAddress);
+            tokensByAddress[tokenAddress] = VaultStruct.Token(ticker, tokenAddress);
             tokenList.push(ticker);
+        }      
+
+        function removeToken (
+            bytes32 ticker)           
+            onlyOwner
+            external {                 
+            tokensByAddress[tokensByTick[ticker].tokenAddress] = VaultStruct.Token(0x0, address(0));
+            tokensByTick[ticker] = VaultStruct.Token(0x0, address(0));
+
+            for(uint256  i ; i < tokenList.length ; i++){
+
+                if (tokenList[i] == ticker){
+                    tokenList[i] =  tokenList[tokenList.length -1];                    
+                    tokenList.pop();
+                }                
+            }         
         }      
        
         

@@ -115,12 +115,11 @@ contract('BagFactory', accounts => {
     }, 'échec de la création du SplitVault');
 
 
-    it.only('should deposit in a bag', async () => {
+    it('should deposit in a bag', async () => {
 
         await _bagMain.createBag('babag !', { from: trader1 });
 
-        let allSB = await _bagMain.getAllBags();
-        const uniswapAddress = "0x1F98431c8aD98523631AE4a59f267346ea31F984";
+        let allSB = await _bagMain.getAllBags();       
 
         let bag = await Bag.at(allSB[0].addr);
         await truffleAssert.reverts(bag.deposit("100", "0x946E9C780F3c79D80e51e68d259d0D7E794F2124"), "Token not available");
@@ -146,15 +145,30 @@ contract('BagFactory', accounts => {
 
     }, 'échec du dépot du Vault');
 
-    it('should buys tokens when fund are received', async () => {
-        console.log(trader1);
+    it.only('should add Token and remove Token', async () => {
         await _bagMain.createBag('babag !', { from: trader1 });
 
-        let allSB = await _bagMain.getAllBags();
+        let allSB = await _bagMain.getAllBags();       
 
-        console.log(' tab = > ' + allSB.length);
-        console.log('addd ' + allSB[0].addr);
-        console.log(trader1);
+        let bag = await Bag.at(allSB[0].addr);
+
+        //let tokens = await bag.getTokens();
+                      
+        await bag.removeToken(stringToBytes32("DAI"));
+        let tokensAfterRemove = await bag.getTokens();
+        assert(tokensAfterRemove.length == 2);
+        assert(tokensAfterRemove[0].tokenAddress = WETHAddr);
+        assert(tokensAfterRemove[1].tokenAddress = LINKAddrr);
+
+        tokenTickToAdd = stringToBytes32("BAL"); 
+        tokenAddressToAdd =  "0xba100000625a3754423978a60c9317c58a424e3d"
+        await bag.addToken(tokenTickToAdd,tokenAddressToAdd);
+        let tokensAfterAdd = await bag.getTokens();
+        assert(tokensAfterAdd.length == 3);
+        assert(tokensAfterAdd[0].tokenAddress = WETHAddr );
+        assert(tokensAfterAdd[1].tokenAddress = LINKAddrr  );
+        assert(tokensAfterAdd[2].tokenAddress = tokenAddressToAdd  );
+
 
     }, 'échec du retrait');
 
