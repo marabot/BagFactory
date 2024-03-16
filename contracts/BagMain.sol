@@ -32,14 +32,18 @@ contract BagMain{
         event TipVaultWithdraw(address indexed _from);
 
         
-        constructor(bytes32[] memory _tokenTicks, address[] memory _tokenAdresses, address _swapRouter, address _supraOracle){
+        constructor(bytes32[] memory _tokenTicks,
+                    address[] memory _tokenAdresses,
+                    uint[] memory _tokenSupraIndex,
+                    address _swapRouter,
+                    address _supraOracle){
             admin= msg.sender;     
             swapRouter = _swapRouter;
             supraOracle = _supraOracle;
 
              for(uint i=0;i<_tokenTicks.length;i++)
             {                
-                 tokens[_tokenTicks[i]] = VaultStruct.Token(_tokenTicks[i], _tokenAdresses[i]);                
+                 tokens[_tokenTicks[i]] = VaultStruct.Token(_tokenTicks[i], _tokenAdresses[i], _tokenSupraIndex[i]);                
                  tokenList.push(_tokenTicks[i]);               
             }
         }
@@ -49,13 +53,16 @@ contract BagMain{
          
             bytes32[] memory tokensTickers = new bytes32[](tokenList.length);
             address[] memory tokensAddress = new address[](tokenList.length);
+            uint[] memory tokensSupraIndex = new uint[](tokenList.length);
+
             for (uint i = 0; i < tokenList.length; i++) {
                 tokensTickers[i] = tokenList[i];
-                tokensAddress[i] = tokens[tokenList[i]].tokenAddress;               
+                tokensAddress[i] = tokens[tokenList[i]].tokenAddress; 
+                tokensSupraIndex[i] = tokens[tokenList[i]].supraIndex;           
             }
 
             nextBagId++;
-            Bag newbag = new Bag(nextBagId,_name,msg.sender, address(this), tokensTickers, tokensAddress, swapRouter, supraOracle);
+            Bag newbag = new Bag(nextBagId,_name,msg.sender, address(this), tokensTickers, tokensAddress, tokensSupraIndex, swapRouter, supraOracle);
 
             address[] storage tp = bagsByOwner[msg.sender];
             tp.push(address(newbag));
@@ -93,7 +100,8 @@ contract BagMain{
             for (uint i = 0; i < tokenList.length; i++) {
                 _tokens[i] = VaultStruct.Token(
                 tokens[tokenList[i]].ticker,
-                tokens[tokenList[i]].tokenAddress
+                tokens[tokenList[i]].tokenAddress,
+                tokens[tokenList[i]].supraIndex
                 );
             }
             return _tokens;
@@ -105,12 +113,13 @@ contract BagMain{
         }
     
         function addToken(
-            bytes32 ticker,
-            address tokenAddress)
+            bytes32 _ticker,
+            address _tokenAddress, 
+            uint _supraIndex)
             onlyAdmin()
             external {
-            tokens[ticker] = VaultStruct.Token(ticker, tokenAddress);
-            tokenList.push(ticker);
+            tokens[_ticker] = VaultStruct.Token(_ticker, _tokenAddress, _supraIndex);
+            tokenList.push(_ticker);
         }
 
         function string_tobytes( string memory s) internal pure  returns (bytes memory ){

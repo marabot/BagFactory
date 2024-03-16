@@ -19,7 +19,7 @@ contract Bag{
         
         // make router inherit instead of a constructor parameter
         address public swapRouter;
-
+        address public weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
         string name;
         uint totalAmount;  
         uint id;
@@ -49,13 +49,14 @@ contract Bag{
             address _bagMain,
             bytes32[] memory _tokensTickers,
             address[] memory _tokensAddress,
+            uint[] memory _tokenSupraIndex,
             address _swapRouter, 
             address _supraOracle
              ){
             for(uint i=0;i<_tokensTickers.length;i++)
             {                
-                 tokensByTick[_tokensTickers[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i]);
-                 tokensByAddress[_tokensAddress[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i]);
+                 tokensByTick[_tokensTickers[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i],_tokenSupraIndex[i]);
+                 tokensByAddress[_tokensAddress[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i],_tokenSupraIndex[i]);
                  tokenList.push(_tokensTickers[i]);               
             }
             owner= _from;            
@@ -63,25 +64,18 @@ contract Bag{
             id=_id;       
             BagMainAddr = _bagMain;  
             sValueFeed = ISupraSValueFeed(_supraOracle);
-            swapRouter = _swapRouter;
-             
-        }
-        
-        function deposit(uint _amount, address _token) external payable onlyOwner {
-                  
-           require(tokensByAddress[_token].tokenAddress != address(0x0) , "Token not available");
-         
-           TransferHelper.safeTransferFrom(_token, msg.sender, address(this), _amount);        
-          
-          uint256  part = _amount / (tokenList.length-1);     
-       
-          for (uint i = 0 ; i < tokenList.length;i++)
-          {            
-            if (_token != tokensByTick[tokenList[i]].tokenAddress)
-            {
-                swapExactInputSingle(part, _token,tokensByTick[tokenList[i]].tokenAddress);
-            }           
+            swapRouter = _swapRouter;       
           }
+             
+        
+        
+        function deposit(uint _amount) external payable onlyOwner {
+           require(IERC20(weth).balanceOf(msg.sender) >= _amount,"not enough minerals !");          
+         
+           TransferHelper.safeTransferFrom(weth, msg.sender, address(this), _amount);        
+          
+           applyStrategie();
+          
         }        
 
         function retire(address _token) external payable onlyOwner {
@@ -95,14 +89,38 @@ contract Bag{
           }
         }   
 
-        function computeParts() internal returns (uint[] memory) {
-            // get all price
-            // get all amounts
-            uint[] memory ret;
-            // add all values / total values
-           
-            return ret;
-        }
+        function applyStrategie() internal  {
+            // compute total amount tokens holding + USDC
+            uint256[] memory tokenHoldingUSDC = new uint256[](tokenList.length);
+            uint256 _totalAmountUSDC = 0;
+
+            for (uint i = 0 ; i < tokenList.length;i++)
+            {   
+                 
+                tokenHoldingUSDC[i] = IERC20(tokensByTick[tokenList[i]].tokenAddress).balanceOf(address(this));
+                _totalAmountUSDC += tokenHoldingUSDC[i];
+            }       
+
+            // calcul part
+            uint256  part = _totalAmountUSDC / (tokenList.length);   
+
+
+            for (uint i = 0 ; i < tokenList.length;i++)
+            {      
+                uint256 deltaUSDC = part;
+                if (tokenHoldingUSDC[i] < part)
+                {   
+                  //  swapExactInputSingle(part, _token,tokensByTick[tokenList[i]].tokenAddress);
+                }
+                    
+                if (tokenHoldingUSDC[i] > part)
+                {
+                  //  swapExactInputSingle(part, _token,tokensByTick[tokenList[i]].tokenAddress);
+                }   
+            }   
+        }           
+            
+        
 
 
         function swapExactInputSingle(uint256 _amountIn, address _tokenToSell, address _tokenToBuy) internal returns (uint256 amountOut) {
@@ -178,28 +196,30 @@ contract Bag{
             for (uint i = 0; i < tokenList.length; i++) {
                 _tokens[i] = VaultStruct.Token(
                 tokensByTick[tokenList[i]].ticker,
-                tokensByTick[tokenList[i]].tokenAddress
+                tokensByTick[tokenList[i]].tokenAddress,
+                tokensByTick[tokenList[i]].supraIndex
                 );
             }
             return _tokens;
         }
     
         function addToken (
-            bytes32 ticker,
-            address tokenAddress)           
+            bytes32 _ticker,
+            address _tokenAddress,
+            uint _supraIndex)           
             onlyOwner
             external {                 
-            tokensByTick[ticker] = VaultStruct.Token(ticker, tokenAddress);
-            tokensByAddress[tokenAddress] = VaultStruct.Token(ticker, tokenAddress);
-            tokenList.push(ticker);
+            tokensByTick[_ticker] = VaultStruct.Token(_ticker, _tokenAddress,_supraIndex);
+            tokensByAddress[_tokenAddress] = tokensByTick[_ticker];
+            tokenList.push(_ticker);
         }      
 
         function removeToken (
             bytes32 ticker)           
             onlyOwner
             external {                 
-            tokensByAddress[tokensByTick[ticker].tokenAddress] = VaultStruct.Token(0x0, address(0));
-            tokensByTick[ticker] = VaultStruct.Token(0x0, address(0));
+            tokensByAddress[tokensByTick[ticker].tokenAddress] = VaultStruct.Token(0x0, address(0), 0);
+            tokensByTick[ticker] = VaultStruct.Token(0x0, address(0),0);
 
             for(uint256  i ; i < tokenList.length ; i++){
 
@@ -210,6 +230,12 @@ contract Bag{
             }         
         }      
        
+        function updateSupraSvalueFeed(ISupraSValueFeed _newSValueFeed) 
+            external 
+            onlyOwner {
+            sValueFeed = _newSValueFeed;
+        }
+
         
         fallback() external payable {
             //require(msg.data.length == 0);

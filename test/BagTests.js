@@ -14,8 +14,11 @@ const SwapRouterMock = artifacts.require('mocks/SwapRouterMock.sol');
 
 const swaprouter = "0xE592427A0AEce92De3Edee1F18E0157C05861564";
 const WETHAddr = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
+const PEPEAddr = "0x6982508145454ce325ddbe47a25d4ec3d2311933";
 const DAIAddr = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
 const LINKAddrr = "0x514910771af9ca656af840dff83e8264ecf986ca";
+const supraOracles = "0x2FA6DbFe4291136Cf272E1A3294362b6651e8517";
+
 
 let wethInstance;
 let DaiInstance;
@@ -28,10 +31,11 @@ contract('BagFactory', accounts => {
 
         _supraOracleMock = await SupraOracleMock.new();
 
-        tokenTick = [stringToBytes32("WETH"), stringToBytes32("DAI"),stringToBytes32("LINK")];
+        let tokenTick = [stringToBytes32("PEPE"), stringToBytes32("DAI"),stringToBytes32("LINK")];        
+        let tokenAddress = [PEPEAddr, DAIAddr, LINKAddrr];
+        let tokenSupraIndex = [92, 41, 2];
         
-        tokenAddress = [WETHAddr, DAIAddr, LINKAddrr];
-        _bagMain = await BagMain.new(tokenTick, tokenAddress, swaprouter, _supraOracleMock.address);
+        _bagMain = await BagMain.new(tokenTick, tokenAddress, tokenSupraIndex, swaprouter, supraOracles);
 
         wethInstance = await WETH.at(WETHAddr);
         let amountBefore = await wethInstance.balanceOf(trader1, { from: trader1 });
@@ -115,14 +119,14 @@ contract('BagFactory', accounts => {
     }, 'échec de la création du SplitVault');
 
 
-    it('should deposit in a bag', async () => {
+    it.only('should deposit in a bag', async () => {
 
         await _bagMain.createBag('babag !', { from: trader1 });
 
         let allSB = await _bagMain.getAllBags();       
 
         let bag = await Bag.at(allSB[0].addr);
-        await truffleAssert.reverts(bag.deposit("100", "0x946E9C780F3c79D80e51e68d259d0D7E794F2124"), "Token not available");
+       
 
         await wethInstance.approve(
             bag.address, 
@@ -130,7 +134,7 @@ contract('BagFactory', accounts => {
             {from: trader1}
         );
 
-        await bag.deposit("100", WETHAddr,{from:trader1});        
+        await bag.deposit("100",{from:trader1});        
 
         let wethAfterDeposit = await wethInstance.balanceOf(allSB[0].addr);
        
@@ -145,7 +149,7 @@ contract('BagFactory', accounts => {
 
     }, 'échec du dépot du Vault');
 
-    it.only('should add Token and remove Token', async () => {
+    it('should add Token and remove Token', async () => {
         await _bagMain.createBag('babag !', { from: trader1 });
 
         let allSB = await _bagMain.getAllBags();       
@@ -157,15 +161,15 @@ contract('BagFactory', accounts => {
         await bag.removeToken(stringToBytes32("DAI"));
         let tokensAfterRemove = await bag.getTokens();
         assert(tokensAfterRemove.length == 2);
-        assert(tokensAfterRemove[0].tokenAddress = WETHAddr);
+        assert(tokensAfterRemove[0].tokenAddress = PEPEAddr);
         assert(tokensAfterRemove[1].tokenAddress = LINKAddrr);
 
         tokenTickToAdd = stringToBytes32("BAL"); 
         tokenAddressToAdd =  "0xba100000625a3754423978a60c9317c58a424e3d"
-        await bag.addToken(tokenTickToAdd,tokenAddressToAdd);
+        await bag.addToken(tokenTickToAdd,tokenAddressToAdd, 57);
         let tokensAfterAdd = await bag.getTokens();
         assert(tokensAfterAdd.length == 3);
-        assert(tokensAfterAdd[0].tokenAddress = WETHAddr );
+        assert(tokensAfterAdd[0].tokenAddress = PEPEAddr );
         assert(tokensAfterAdd[1].tokenAddress = LINKAddrr  );
         assert(tokensAfterAdd[2].tokenAddress = tokenAddressToAdd  );
 
