@@ -31,11 +31,11 @@ contract Bag{
         mapping(address => VaultStruct.Token) public tokensByAddress;
 
         bytes32[] public tokenList;
-
+        uint256[] public tokenSupraOracleIndex;
 
         struct Token {
             bytes32 ticker;
-            address tokenAddress;
+            address tokenAddress; 
         }      
 
         address owner; 
@@ -57,7 +57,8 @@ contract Bag{
             {                
                  tokensByTick[_tokensTickers[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i],_tokenSupraIndex[i]);
                  tokensByAddress[_tokensAddress[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i],_tokenSupraIndex[i]);
-                 tokenList.push(_tokensTickers[i]);               
+                 tokenList.push(_tokensTickers[i]);     
+                 tokenSupraoracleIndex[i] = _tokenSupraIndex[i];          
             }
             owner= _from;            
             name = _name; 
@@ -211,7 +212,9 @@ contract Bag{
             external {                 
             tokensByTick[_ticker] = VaultStruct.Token(_ticker, _tokenAddress,_supraIndex);
             tokensByAddress[_tokenAddress] = tokensByTick[_ticker];
+      
             tokenList.push(_ticker);
+            tokenSupraOracleIndex.push(_supraIndex);
         }      
 
         function removeToken (
@@ -226,6 +229,9 @@ contract Bag{
                 if (tokenList[i] == ticker){
                     tokenList[i] =  tokenList[tokenList.length -1];                    
                     tokenList.pop();
+
+                    tokenSupraOracleIndex[i] = tokenSupraOracleIndex[tokenSupraOracleIndex.length-1];
+                    tokenSupraOracleIndex.pop();
                 }                
             }         
         }      
