@@ -5,7 +5,8 @@ pragma solidity 0.8.19;
 library VaultStruct{
      struct Token {
             bytes32 ticker;
-            address tokenAddress;            
+            address tokenAddress; 
+            uint supraIndex;
         }
 
         struct Bag {
