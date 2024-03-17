@@ -5,7 +5,7 @@ pragma abicoder v2;
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import './libraries/VaultStruct.sol';
 
-import './libraries/ISupraSValueFeed.sol';
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
 import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
@@ -13,9 +13,8 @@ import "hardhat/console.sol";
 
 contract Bag{
 
-        // Tips by owner
-        mapping(address => VaultStruct.Tip) Tips;
-        ISupraSValueFeed internal sValueFeed;
+       
+        AggregatorV3Interface[] internal dataFeeds;
 
 
         // make router inherit instead of a constructor parameter
@@ -32,7 +31,6 @@ contract Bag{
         mapping(address => VaultStruct.Token) public tokensByAddress;
 
         bytes32[] public tokenList;
-        uint256[] public tokenSupraOracleIndex;
 
         struct Token {
             bytes32 ticker;
@@ -50,22 +48,21 @@ contract Bag{
             address _bagMain,
             bytes32[] memory _tokensTickers,
             address[] memory _tokensAddress,
-            uint[] memory _tokenSupraIndex,
-            address _swapRouter, 
-            address _supraOracle
+            address[] memory _chainlinkAddr,
+            address _swapRouter
+            
              ){
             for(uint i=0;i<_tokensTickers.length;i++)
             {                
-                 tokensByTick[_tokensTickers[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i],_tokenSupraIndex[i]);
-                 tokensByAddress[_tokensAddress[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i],_tokenSupraIndex[i]);
-                 tokenList.push(_tokensTickers[i]);     
-                 tokenSupraOracleIndex.push(_tokenSupraIndex[i]);          
+                 tokensByTick[_tokensTickers[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i],_chainlinkAddr[i]);
+                 tokensByAddress[_tokensAddress[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i],_chainlinkAddr[i]);
+                 tokenList.push(_tokensTickers[i]);                              
             }
             owner= _from;            
             name = _name; 
             id=_id;       
             BagMainAddr = _bagMain;  
-            sValueFeed = ISupraSValueFeed(_supraOracle);
+            //dataFeed = AggregatorV3Interface(_chainlinkAddr);
             swapRouter = _swapRouter;       
           }
              
@@ -92,11 +89,6 @@ contract Bag{
         }   
 
         function applyStrategie() internal  {
-
-           // ISupraSValueFeed.priceFeed[] memory supraOraclePrices = getPriceForMultiplePair(tokenSupraOracleIndex);
-           // console.log("oracle");
-            //console.log(supraOraclePrices);
-
 
             // compute total amount tokens holding + USDC
             uint256[] memory tokenHoldingUSDC = new uint256[](tokenList.length);
@@ -167,26 +159,7 @@ contract Bag{
             );
         }
 
-        // requesting s-values for multiple pairs
-        function getPriceForMultiplePair (uint256[] memory _pairIndexes) 
-            internal 
-            view 
-            returns (ISupraSValueFeed.priceFeed[] memory) {
-            return sValueFeed.getSvalues(_pairIndexes);
-        }
-
-        function getMarketCapsMultiplePair(address[] memory _tokensAdress)
-            external 
-            view
-            returns (uint256[] memory){
-            uint256[] memory returnArray = new uint256[](_tokensAdress.length);
-
-            for(uint i=0;i<_tokensAdress.length;i++){
-                returnArray[i] = IERC20(_tokensAdress[i]).totalSupply();
-            }
-            
-            return returnArray;
-        }
+       
 
         function getBalance()external view returns (uint){
             return address(this).balance;
@@ -209,7 +182,7 @@ contract Bag{
                 _tokens[i] = VaultStruct.Token(
                 tokensByTick[tokenList[i]].ticker,
                 tokensByTick[tokenList[i]].tokenAddress,
-                tokensByTick[tokenList[i]].supraIndex
+                tokensByTick[tokenList[i]].chainLinkAddress
                 );
             }
             return _tokens;
@@ -218,41 +191,31 @@ contract Bag{
         function addToken (
             bytes32 _ticker,
             address _tokenAddress,
-            uint _supraIndex)           
+            address _chainLinkAddress)           
             onlyOwner
             external {                 
-            tokensByTick[_ticker] = VaultStruct.Token(_ticker, _tokenAddress,_supraIndex);
+            tokensByTick[_ticker] = VaultStruct.Token(_ticker, _tokenAddress,_chainLinkAddress);
             tokensByAddress[_tokenAddress] = tokensByTick[_ticker];      
-            tokenList.push(_ticker);
-            tokenSupraOracleIndex.push(_supraIndex);
+            tokenList.push(_ticker);           
         }      
 
         function removeToken (
             bytes32 ticker)           
             onlyOwner
             external {                 
-            tokensByAddress[tokensByTick[ticker].tokenAddress] = VaultStruct.Token(0x0, address(0), 0);
-            tokensByTick[ticker] = VaultStruct.Token(0x0, address(0),0);
+            tokensByAddress[tokensByTick[ticker].tokenAddress] = VaultStruct.Token(0x0, address(0), address(0));
+            tokensByTick[ticker] = VaultStruct.Token(0x0, address(0), address(0));
 
             for(uint256  i ; i < tokenList.length ; i++){
 
                 if (tokenList[i] == ticker){
                     tokenList[i] =  tokenList[tokenList.length -1];                    
                     tokenList.pop();
-
-                    tokenSupraOracleIndex[i] = tokenSupraOracleIndex[tokenSupraOracleIndex.length-1];
-                    tokenSupraOracleIndex.pop();
                 }                
             }         
         }      
        
-        function updateSupraSvalueFeed(ISupraSValueFeed _newSValueFeed) 
-            external 
-            onlyOwner {
-            sValueFeed = _newSValueFeed;
-        }
-
-        
+               
         fallback() external payable {
             //require(msg.data.length == 0);
         }

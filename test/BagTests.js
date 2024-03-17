@@ -34,8 +34,16 @@ contract('BagFactory', accounts => {
         let tokenTick = [stringToBytes32("PEPE"), stringToBytes32("DAI"),stringToBytes32("LINK")];        
         let tokenAddress = [PEPEAddr, DAIAddr, LINKAddrr];
         let tokenSupraIndex = [92, 41, 2];
+
+        let tokens = [
+            {ticker:stringToBytes32("PEPE"),tokenAddress:PEPEAddr,chainLinkAddress:"0xDC530D9457755926550b59e8ECcdaE7624181557"},
+            {ticker:stringToBytes32("DAI"),tokenAddress:DAIAddr,chainLinkAddress:"0xDC530D9457755926550b59e8ECcdaE7624181557"} ,
+            {ticker:stringToBytes32("LINK"),tokenAddress:LINKAddrr,chainLinkAddress:"0xDC530D9457755926550b59e8ECcdaE7624181557"}
+        ]
         
-        _bagMain = await BagMain.new(tokenTick, tokenAddress, tokenSupraIndex, swaprouter, supraOracles);
+        let chainlinkAddr =  ["0xDC530D9457755926550b59e8ECcdaE7624181557","0xDC530D9457755926550b59e8ECcdaE7624181557","0xDC530D9457755926550b59e8ECcdaE7624181557"];
+
+        _bagMain = await BagMain.new(tokens, swaprouter);
 
         wethInstance = await WETH.at(WETHAddr);
         let amountBefore = await wethInstance.balanceOf(trader1, { from: trader1 });

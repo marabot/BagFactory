@@ -6,7 +6,7 @@ library VaultStruct{
      struct Token {
             bytes32 ticker;
             address tokenAddress; 
-            uint supraIndex;
+            address chainLinkAddress;
         }
 
         struct Bag {
