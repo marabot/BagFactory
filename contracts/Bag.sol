@@ -16,7 +16,8 @@ contract Bag{
         // Tips by owner
         mapping(address => VaultStruct.Tip) Tips;
         ISupraSValueFeed internal sValueFeed;
-        
+
+
         // make router inherit instead of a constructor parameter
         address public swapRouter;
         address public weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -58,7 +59,7 @@ contract Bag{
                  tokensByTick[_tokensTickers[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i],_tokenSupraIndex[i]);
                  tokensByAddress[_tokensAddress[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i],_tokenSupraIndex[i]);
                  tokenList.push(_tokensTickers[i]);     
-                 tokenSupraoracleIndex[i] = _tokenSupraIndex[i];          
+                 tokenSupraOracleIndex.push(_tokenSupraIndex[i]);          
             }
             owner= _from;            
             name = _name; 
@@ -91,9 +92,15 @@ contract Bag{
         }   
 
         function applyStrategie() internal  {
+
+           // ISupraSValueFeed.priceFeed[] memory supraOraclePrices = getPriceForMultiplePair(tokenSupraOracleIndex);
+           // console.log("oracle");
+            //console.log(supraOraclePrices);
+
+
             // compute total amount tokens holding + USDC
             uint256[] memory tokenHoldingUSDC = new uint256[](tokenList.length);
-            uint256 _totalAmountUSDC = 0;
+            uint256 _totalAmountUSDC = IERC20(weth).balanceOf(address(this));
 
             for (uint i = 0 ; i < tokenList.length;i++)
             {   
@@ -104,20 +111,24 @@ contract Bag{
 
             // calcul part
             uint256  part = _totalAmountUSDC / (tokenList.length);   
-
+          
 
             for (uint i = 0 ; i < tokenList.length;i++)
-            {      
-                uint256 deltaUSDC = part;
-                if (tokenHoldingUSDC[i] < part)
-                {   
-                  //  swapExactInputSingle(part, _token,tokensByTick[tokenList[i]].tokenAddress);
-                }
-                    
+            {                           
                 if (tokenHoldingUSDC[i] > part)
                 {
                   //  swapExactInputSingle(part, _token,tokensByTick[tokenList[i]].tokenAddress);
                 }   
+            }   
+
+              for (uint i = 0 ; i < tokenList.length;i++)
+            {      
+               
+                if (tokenHoldingUSDC[i] < part)
+                {   
+                  //  swapExactInputSingle(part, _token,tokensByTick[tokenList[i]].tokenAddress);
+                }
+              
             }   
         }           
             
@@ -157,8 +168,8 @@ contract Bag{
         }
 
         // requesting s-values for multiple pairs
-        function getPriceForMultiplePair(uint256[] memory _pairIndexes) 
-            external 
+        function getPriceForMultiplePair (uint256[] memory _pairIndexes) 
+            internal 
             view 
             returns (ISupraSValueFeed.priceFeed[] memory) {
             return sValueFeed.getSvalues(_pairIndexes);
@@ -211,8 +222,7 @@ contract Bag{
             onlyOwner
             external {                 
             tokensByTick[_ticker] = VaultStruct.Token(_ticker, _tokenAddress,_supraIndex);
-            tokensByAddress[_tokenAddress] = tokensByTick[_ticker];
-      
+            tokensByAddress[_tokenAddress] = tokensByTick[_ticker];      
             tokenList.push(_ticker);
             tokenSupraOracleIndex.push(_supraIndex);
         }      
