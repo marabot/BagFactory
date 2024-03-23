@@ -13,11 +13,14 @@ const SupraOracleMock = artifacts.require('mocks/SupraOracleMock.sol');
 const SwapRouterMock = artifacts.require('mocks/SwapRouterMock.sol');
 
 const swaprouter = "0xE592427A0AEce92De3Edee1F18E0157C05861564";
-const WETHAddr = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
-const PEPEAddr = "0x6982508145454ce325ddbe47a25d4ec3d2311933";
-const DAIAddr = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
-const LINKAddrr = "0x514910771af9ca656af840dff83e8264ecf986ca";
-const supraOracles = "0x2FA6DbFe4291136Cf272E1A3294362b6651e8517";
+const WETHAddr = "0x4200000000000000000000000000000000000006";
+const AAVEAddr = "0x76FB31fb4af56892A25e32cFC43De717950c9278";
+const DAIAddr = "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1";
+const LINKAddrr = "0x350a791bfc2c21f9ed5d10980dad2e2638ffa7f6";
+
+const oracleAAVE ="0x338ed6787f463394D24813b297401B9F05a8C9d1";
+const oracleDAI = "0x8dBa75e83DA73cc766A7e5a0ee71F656BAb470d6";
+const oracleLINK = "0xCc232dcFAAE6354cE191Bd574108c1aD03f86450";
 
 
 let wethInstance;
@@ -29,39 +32,34 @@ contract('BagFactory', accounts => {
 
     beforeEach(async () => {
 
-        _supraOracleMock = await SupraOracleMock.new();
-
-        let tokenTick = [stringToBytes32("PEPE"), stringToBytes32("DAI"),stringToBytes32("LINK")];        
-        let tokenAddress = [PEPEAddr, DAIAddr, LINKAddrr];
-        let tokenSupraIndex = [92, 41, 2];
-
         let tokens = [
-            {ticker:stringToBytes32("PEPE"),tokenAddress:PEPEAddr,chainLinkAddress:"0xDC530D9457755926550b59e8ECcdaE7624181557"},
-            {ticker:stringToBytes32("DAI"),tokenAddress:DAIAddr,chainLinkAddress:"0xDC530D9457755926550b59e8ECcdaE7624181557"} ,
-            {ticker:stringToBytes32("LINK"),tokenAddress:LINKAddrr,chainLinkAddress:"0xDC530D9457755926550b59e8ECcdaE7624181557"}
-        ]
-        
-        let chainlinkAddr =  ["0xDC530D9457755926550b59e8ECcdaE7624181557","0xDC530D9457755926550b59e8ECcdaE7624181557","0xDC530D9457755926550b59e8ECcdaE7624181557"];
+            {ticker:stringToBytes32("AAVE"),tokenAddress:AAVEAddr,chainLinkAddress:oracleAAVE},
+            {ticker:stringToBytes32("DAI"),tokenAddress:DAIAddr,chainLinkAddress:oracleDAI} ,
+            {ticker:stringToBytes32("LINK"),tokenAddress:LINKAddrr,chainLinkAddress:oracleLINK}
+        ]       
 
         _bagMain = await BagMain.new(tokens, swaprouter);
 
         wethInstance = await WETH.at(WETHAddr);
-        let amountBefore = await wethInstance.balanceOf(trader1, { from: trader1 });
+        let amountBefore = await wethInstance.balanceOf(trader1, { from: trader1 });        
 
         DaiInstance = await DAI.at(DAIAddr);
         LINKInstance = await DAI.at(LINKAddrr);
+        AAVEInstance = await DAI.at(AAVEAddr);
 
         console.log("swap");
-        console.log(amountBefore);
+        console.log(web3.utils.fromWei(amountBefore));
 
-        await wethInstance.deposit({ value: "1100", from: trader1 })      
+        const amount = web3.utils.toWei('1000');
+       // await wethInstance.deposit({ value: "100", from: trader1 })   
+        await wethInstance.deposit({ value: amount, from: trader1 })      
 
         let amountAfter = await wethInstance.balanceOf(trader1);
 
         console.log(trader1);
-        console.log(amountAfter);
+        console.log(web3.utils.fromWei(amountAfter));
 
-        const amount = web3.utils.toWei('1000');
+     
 
         /*
         await dai.faucet(trader1, amount)
@@ -127,7 +125,7 @@ contract('BagFactory', accounts => {
     }, 'échec de la création du SplitVault');
 
 
-    it.only('should deposit in a bag', async () => {
+    it.only('should deposit and retire in a bag', async () => {
 
         await _bagMain.createBag('babag !', { from: trader1 });
 
@@ -138,22 +136,36 @@ contract('BagFactory', accounts => {
 
         await wethInstance.approve(
             bag.address, 
-            "1000", 
+            web3.utils.toWei("0.1"), 
             {from: trader1}
         );
+      
+        await bag.deposit( web3.utils.toWei("0.1"),{from:trader1});        
 
-        await bag.deposit("100",{from:trader1});        
-
-        let wethAfterDeposit = await wethInstance.balanceOf(allSB[0].addr);
-       
+        wethAfterDeposit = await wethInstance.balanceOf(allSB[0].addr);       
         let DAiBagAfterDeposit = await DaiInstance.balanceOf(allSB[0].addr);
-        let LinkBagAfterDeposit = await LINKInstance.balanceOf(allSB[0].addr);         
+        let LinkBagAfterDeposit = await LINKInstance.balanceOf(allSB[0].addr); 
+        let AAVEBagAfterDeposit = await AAVEInstance.balanceOf(allSB[0].addr);     
         
-        console.log("result");
-        console.log(trader1);
-        console.log(wethAfterDeposit);       
-        console.log(DAiBagAfterDeposit);
-        console.log(LinkBagAfterDeposit);
+        console.log("result after deposit :");
+        console.log(web3.utils.fromWei(wethAfterDeposit));       
+        console.log(web3.utils.fromWei(AAVEBagAfterDeposit));
+        console.log(web3.utils.fromWei(DAiBagAfterDeposit));
+        console.log(web3.utils.fromWei(LinkBagAfterDeposit));
+       
+
+        await bag.retire();  
+          
+        wethAfterDeposit = await wethInstance.balanceOf(allSB[0].addr);     
+        DAiBagAfterDeposit = await DaiInstance.balanceOf(allSB[0].addr);
+        LinkBagAfterDeposit = await LINKInstance.balanceOf(allSB[0].addr); 
+        AAVEBagAfterDeposit = await AAVEInstance.balanceOf(allSB[0].addr); 
+
+        console.log("result after retire :");
+        console.log(web3.utils.fromWei(wethAfterDeposit));       
+        console.log(web3.utils.fromWei(AAVEBagAfterDeposit));
+        console.log(web3.utils.fromWei(DAiBagAfterDeposit));
+        console.log(web3.utils.fromWei(LinkBagAfterDeposit));
 
     }, 'échec du dépot du Vault');
 

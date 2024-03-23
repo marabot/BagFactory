@@ -67,14 +67,10 @@ contract BagMain{
             return address(newbag);
         }
 
-            
-
         function getBagsFromOwner(address _owner) external view returns (address[] memory){                      
            return bagsByOwner[_owner];     
         }
-
         
-
         function getAllBags() external view returns (VaultStruct.Bag[] memory){
            VaultStruct.Bag[] memory  ret = new VaultStruct.Bag[](allBags.length);
 
