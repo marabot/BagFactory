@@ -47,8 +47,8 @@ contract('BagFactory', accounts => {
         LINKInstance = await DAI.at(LINKAddrr);
         AAVEInstance = await DAI.at(AAVEAddr);
 
-        console.log("swap");
-        console.log(web3.utils.fromWei(amountBefore));
+        /*console.log("swap");
+        console.log(web3.utils.fromWei(amountBefore));*/
 
         const amount = web3.utils.toWei('1000');
        // await wethInstance.deposit({ value: "100", from: trader1 })   
@@ -56,88 +56,26 @@ contract('BagFactory', accounts => {
 
         let amountAfter = await wethInstance.balanceOf(trader1);
 
-        console.log(trader1);
-        console.log(web3.utils.fromWei(amountAfter));
-
-     
-
-        /*
-        await dai.faucet(trader1, amount)
-        await dai.approve(
-            _bagMain.address, 
-            amount, 
-            {from: trader1}
-        );
-
-        await dai.faucet(trader2, amount)
-        await dai.approve(
-            _bagMain.address, 
-            amount, 
-            {from: trader2}
-        );
-
-        await dai.faucet(trader3, amount)
-        await dai.approve(
-            _bagMain.address, 
-            amount, 
-            {from: trader3}
-        );
-
-        await dai.faucet(trader4, amount)
-        await dai.approve(
-            _bagMain.address, 
-            amount, 
-            {from: trader4}
-        );
-
-        await dai.faucet(trader5, amount)
-        await dai.approve(
-            _bagMain.address, 
-            amount, 
-            {from: trader5}
-        );
-       
-        VF.addToken(DAI, dai.address); */
+        /*console.log(trader1);
+        console.log(web3.utils.fromWei(amountAfter)); */    
     })
 
-
-    it('should create a bag', async () => {
-
+    it('should create a bag, deposit and retire, and revert if not owner of the bag', async () => {
+      
         await _bagMain.createBag('babag !', { from: trader1 });
-
-        let allSB = await _bagMain.getAllBags();
-
-        console.log(' tab = > ' + allSB.length);
-        console.log('addd ' + allSB[0].addr);
-        console.log(allSB);
-        assert(allSB.length == 1);
-        assert(allSB[0].name == "babag !");
-        assert(allSB[0].addr != "0x0");
-        assert(allSB[0].from == trader1);
-        assert(allSB[0].totalAmount == 0);
-
-        let bagInstance = await Bag.at(allSB[0].addr);
-        let tokensCount = await bagInstance.tokensByAddress(WETHAddr);
-        console.log('list tokens count ');
-        console.log(tokensCount);
-        //assert(tokensCount.length>1);
-
-    }, 'échec de la création du SplitVault');
-
-
-    it.only('should deposit and retire in a bag', async () => {
-
-        await _bagMain.createBag('babag !', { from: trader1 });
-
         let allSB = await _bagMain.getAllBags();       
-
-        let bag = await Bag.at(allSB[0].addr);
-       
+        let bag = await Bag.at(allSB[0].addr);       
 
         await wethInstance.approve(
             bag.address, 
             web3.utils.toWei("0.1"), 
             {from: trader1}
+        );
+
+        // Test Deposit
+        await truffleAssert.reverts(
+            bag.deposit( web3.utils.toWei("0.1"),{from:trader2}),
+            "only owner"
         );
       
         await bag.deposit( web3.utils.toWei("0.1"),{from:trader1});        
@@ -147,13 +85,19 @@ contract('BagFactory', accounts => {
         let LinkBagAfterDeposit = await LINKInstance.balanceOf(allSB[0].addr); 
         let AAVEBagAfterDeposit = await AAVEInstance.balanceOf(allSB[0].addr);     
         
+        /*
         console.log("result after deposit :");
         console.log(web3.utils.fromWei(wethAfterDeposit));       
         console.log(web3.utils.fromWei(AAVEBagAfterDeposit));
         console.log(web3.utils.fromWei(DAiBagAfterDeposit));
         console.log(web3.utils.fromWei(LinkBagAfterDeposit));
+        */
        
-
+        // Test Retire
+        await truffleAssert.reverts(
+            bag.retire({from: trader2}),
+            "only owner"
+        );
         await bag.retire();  
           
         wethAfterDeposit = await wethInstance.balanceOf(allSB[0].addr);     
@@ -161,40 +105,49 @@ contract('BagFactory', accounts => {
         LinkBagAfterDeposit = await LINKInstance.balanceOf(allSB[0].addr); 
         AAVEBagAfterDeposit = await AAVEInstance.balanceOf(allSB[0].addr); 
 
+        /*
         console.log("result after retire :");
         console.log(web3.utils.fromWei(wethAfterDeposit));       
         console.log(web3.utils.fromWei(AAVEBagAfterDeposit));
         console.log(web3.utils.fromWei(DAiBagAfterDeposit));
         console.log(web3.utils.fromWei(LinkBagAfterDeposit));
+        */
 
-    }, 'échec du dépot du Vault');
+    }, 'Failed Test : create bag, deposit and retire');
 
-    it('should add Token and remove Token', async () => {
+    it('should add Token and remove Token, and revert if not owner of the bag', async () => {
+
+        // create Bag
         await _bagMain.createBag('babag !', { from: trader1 });
-
-        let allSB = await _bagMain.getAllBags();       
-
+        let allSB = await _bagMain.getAllBags();      
         let bag = await Bag.at(allSB[0].addr);
-
-        //let tokens = await bag.getTokens();
-                      
-        await bag.removeToken(stringToBytes32("DAI"));
+        
+     
+        // test removeToken
+        await truffleAssert.reverts(
+            bag.removeToken(stringToBytes32("AAVE"), {from : trader2}),
+            "only owner"
+        );
+                            
+        await bag.removeToken(stringToBytes32("AAVE"),{from : trader1});
         let tokensAfterRemove = await bag.getTokens();
         assert(tokensAfterRemove.length == 2);
-        assert(tokensAfterRemove[0].tokenAddress = PEPEAddr);
+        assert(tokensAfterRemove[0].tokenAddress = DAIAddr);
         assert(tokensAfterRemove[1].tokenAddress = LINKAddrr);
 
+
+        // Test AddToken
         tokenTickToAdd = stringToBytes32("BAL"); 
         tokenAddressToAdd =  "0xba100000625a3754423978a60c9317c58a424e3d"
-        await bag.addToken(tokenTickToAdd,tokenAddressToAdd, 57);
+        await bag.addToken(stringToBytes32("AAVE"),AAVEAddr, oracleAAVE);
         let tokensAfterAdd = await bag.getTokens();
         assert(tokensAfterAdd.length == 3);
-        assert(tokensAfterAdd[0].tokenAddress = PEPEAddr );
+        assert(tokensAfterAdd[0].tokenAddress = DAIAddr );
         assert(tokensAfterAdd[1].tokenAddress = LINKAddrr  );
-        assert(tokensAfterAdd[2].tokenAddress = tokenAddressToAdd  );
+        assert(tokensAfterAdd[2].tokenAddress = AAVEAddr  );
 
 
-    }, 'échec du retrait');
+    }, 'Failed Test : add and remove Token');
 
     function stringToBytes32(str) {
         let hexString = web3.utils.asciiToHex(str);
