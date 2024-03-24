@@ -102,7 +102,6 @@ contract Bag{
             uint256[] memory tokenHoldingUSDC = new uint256[](tokenList.length);           
             uint256[] memory prices = getPrices();
             uint256 wethPrice = getWethPrice();
-            console.log("weth price %s",wethPrice);
             uint256 totalAmountUSDC = 0;
             uint256 average;
             uint256 balWETH; 
@@ -129,8 +128,7 @@ contract Bag{
                         uint256 amountUSD = average/20;
                         uint256 amountInWETH = amountUSD / wethPrice;
 
-                        uint256 amountOut = (amountUSD /  prices[i] * (10**8))*98/100;
-                        console.log("Min amountOut  %s",  amountOut);                      
+                        uint256 amountOut = (amountUSD /  prices[i] * (10**8))*98/100;                                              
 
                         swapExactInputSingle(amountInWETH,tokensByTick[tokenList[i]].tokenAddress,weth, amountOut);
                         soldTokens[soldtokensindex] = tokenList[i];
@@ -152,13 +150,11 @@ contract Bag{
         }        
 
         function getPrices() internal returns (uint256[] memory prices){
-            console.log("nombre de tokens %s", tokenList.length);
-            
+                       
             prices= new uint256[](tokenList.length);
             for (uint8 i =0;i<tokenList.length;i++){
               
-                prices[i] = getChainlinkDataFeedLatestAnswer(tokenList[i]);
-                console.log("price %s",  prices[i]*(10**10)); 
+                prices[i] = getChainlinkDataFeedLatestAnswer(tokenList[i]);               
             }
         }
 
@@ -189,17 +185,16 @@ contract Bag{
                     sqrtPriceLimitX96: 0
                 });
 
-            console.log(
+            /*console.log(
                             "amount in  %s  %s from  %s",
                             _amountIn,
                             _tokenToBuy,
                             _tokenToSell
-                        );
+                        );*/
 
             // The call to `exactInputSingle` executes the swap.
             amountOut = ISwapRouter(swapRouter).exactInputSingle(params);          
-        }
-       
+        }       
 
         function getBalance()external view returns (uint){
             return address(this).balance;
