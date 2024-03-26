@@ -1,6 +1,6 @@
 import Web3 from 'web3';
-import VaultMain from './contracts/VaultMain.json';
-import TipVault from './contracts/TipVault.json';
+import BagMain from './contracts/BagMain.json';
+import Bag from './contracts/Bag.json';
 
 
 const getWeb3 = () => {
@@ -46,24 +46,24 @@ const getContracts = async web3 => {
   const networkId = await web3.eth.net.getId();
 
   //  console.log("ds getContracts -  Network Id :" + networkId);
-  const deployedNetwork = VaultMain.networks[networkId];
+  const deployedNetwork = BagMain.networks[networkId];
   // console.log("ds getContracts - deployed Network :" + deployedNetwork);
   if (deployedNetwork) console.log("ds getContracts - address :" + deployedNetwork.address);
 
-  const vaultMain = new web3.eth.Contract(
-    VaultMain.abi,
+  const bagMain = new web3.eth.Contract(
+    BagMain.abi,
     deployedNetwork && deployedNetwork.address,
   );
 
-  //  console.log(vaultMain.options.address);
-  // console.log("ds getContracts - contract : " + vaultMain.options.jsonInterface + ' -- ' + vaultMain.options.address);
+  //  console.log(bagMain.options.address);
+  // console.log("ds getContracts - contract : " + bagMain.options.jsonInterface + ' -- ' + vaultMain.options.address);
 
   /* const tipVault = new web3.eth.Contract(
      TipVault.abi,
      deployedNetwork && deployedNetwork.address,
    );
 */
-  //const tokens = await vaultMain.methods.getTokens().call();
+  //const tokens = await bagMain.methods.getTokens().call();
   /*
    const tokenContracts = tokens.reduce((acc, token) => ({
      ...acc,
@@ -72,8 +72,8 @@ const getContracts = async web3 => {
        token.tokenAddress
      )
    }), {});*/
-  //return { vaultMain , ...tokenContracts };
-  return { vaultMain };
+  //return { bagMain , ...tokenContracts };
+  return { bagMain };
 }
 
 

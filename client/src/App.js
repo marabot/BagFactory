@@ -3,11 +3,9 @@ import React, { useState, useEffect } from "react";
 import Header from './Header.js';
 import TipVault from './TipVaults.js';
 import Tips from './Tips.js';
-import Vaults from './Vaults.js';
 import './Main.css';
-import NewVault from "./NewTipVault.js";
+import CreateBag from "./CreateBagPopup.js";
 import Deposit from "./Deposit.js";
-import Withdraw from "./Withdraw.js";
 import { Helmet } from "react-helmet";
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -41,8 +39,8 @@ function App() {
   const createSplit = async (_name, _receiver) => {
     //console.log(web3);
     console.log(contracts);
-    await contracts.vaultMain.methods.createTipVault(_name, _receiver).send({ from: userAddr });
-    const AllTipVaults = await contracts.vaultMain.methods.getAllTipVaults().call();
+    await contracts.BagMain.methods.createTipVault(_name, _receiver).send({ from: userAddr });
+    const AllTipVaults = await contracts.BagMain.methods.getAllTipVaults().call();
     setMyTipVaults(AllTipVaults);
     setShowCreate(false);
   };
@@ -73,24 +71,12 @@ function App() {
   }
 
   ///////////////////////// COMPONENTs RENDERER
-  const depositComponetRender = function () {
-    if (showDeposit === true) {
-
-      return (
-        <Deposit
-          VaultAddr={DepositVaultAddr}
-          deposit={deposit}
-          closePopupDepo={closePopupDepo}
-          web3={web3}
-        />
-      )
-    }
-  }
+  
 
   const createComponetRender = function () {
     if (showCreate === true) {
       return (
-        <NewVault
+        <CreateBag
           createSplit={createSplit}
           closePopupCreate={closePopupCreate}
         />
@@ -98,34 +84,14 @@ function App() {
     }
   }
 
-  const withdrawComponetRender = function () {
-    if (showWithdraw === true) {
-      return (
-        <Withdraw
-          VaultAddr={DepositVaultAddr}
-          withdraw={withdraw}
-          closePopupWithdraw={closePopupWithdraw}
-        />
-      )
-    }
-  }
-
-  const withdraw = async (tipVaultAddr) => {
-
-    try {
-      await contracts.vaultMain.methods.retireTips(tipVaultAddr).send({ from: userAddr });
-      closePopupDepo();
-
-    } catch (e) {
-      alert('error withdraw !  ' + e);
-    }
-  }
+ 
+  
 
   const deposit = async (tipVaultAddr, amount) => {
     setDepositVaultAddr(tipVaultAddr);
     try {
       let weiAmount = web3.utils.toWei(amount);
-      await contracts.vaultMain.methods.tip(tipVaultAddr).send({ from: userAddr, value: weiAmount });
+      await contracts.BagMain.methods.tip(tipVaultAddr).send({ from: userAddr, value: weiAmount });
       closePopupDepo();
 
     } catch (e) {
@@ -135,7 +101,7 @@ function App() {
 
   const closeSplit = async (tipVaultAddr) => {
     try {
-      await contracts.vaultMain.methods.closeTipVault(tipVaultAddr).send({ from: userAddr });
+      await contracts.BagMain.methods.closeTipVault(tipVaultAddr).send({ from: userAddr });
 
     } catch (e) {
       alert('error closing !' + e);
@@ -158,7 +124,6 @@ function App() {
           showDeposit={showPopupDeposit}
           showCreate={showCreateCard}
           closeSplit={closeSplit}
-          withDraw={withdraw}
           addrUser={userAddr}
           network={Network}
         />
@@ -192,7 +157,6 @@ function App() {
           showDeposit={showPopupDeposit}
           showCreate={showCreateCard}
           closeSplit={closeSplit}
-          withDraw={withdraw}
           addrUser={userAddr}
           network={Network}
         />
@@ -233,7 +197,7 @@ function App() {
   const listenToEvents = (thisComponent) => {
     //const tradeIds=new Set();
     // setTrades([]);
-    const listenerTipVaultCreated = contracts.vaultMain.events.TipVaultCreated({
+    const listenerTipVaultCreated = contracts.BagMain.events.TipVaultCreated({
       fromBlock: 0
     })
       .on('data', () => {
@@ -259,7 +223,7 @@ function App() {
       setUserAddr(acc);
       console.log("app 280  acc: " + acc);
       console.log(contracts);
-
+/*
       const allVaults = await smartContracts.vaultMain.methods.getAllTipVaults().call();
       setAllVaults(allVaults);
       console.log("AllVaults !!!!!!!!!!!!!!!!!")
@@ -272,7 +236,7 @@ function App() {
 
       console.log("app 280 : " + myTipVaults);
       const myTips = await smartContracts.vaultMain.methods.getTipsByOwnerAddr(acc).call();
-      setMyTips(myTips);
+      setMyTips(myTips);*/
 
     }
   };
@@ -282,8 +246,6 @@ function App() {
 
     //console.log('useEffect :');
     const init = async () => {
-      // console.log('web3 :' + web3);
-
 
       setShowDeposit(false);
       setShowCreate(false);
@@ -337,11 +299,9 @@ function App() {
         setNetwork={setNetwork}
       />
       <Row style={paddingRow}>
-
-        <Col className="col-sm-4"><div ><button id="boutMenuTipVault" className="btn btn-primary" style={boutonMenu} onClick={() => setMenuIndex(0)}>All Vaults</button></div></Col>
-        <Col className="col-sm-4"><div ><button id="boutMenuTip" className="btn btn-primary" style={boutonMenu} onClick={() => setMenuIndex(1)}>your Vaults</button></div></Col>
-        <Col className="col-sm-4"><div ><button id="boutMenuTip" className="btn btn-primary" style={boutonMenu} onClick={() => setMenuIndex(2)}>your deposits</button></div></Col>
-
+      
+        <Col className="col-sm-4"><div ><button id="boutMenuBag" className="btn btn-primary" style={boutonMenu} onClick={() => setMenuIndex(1)}>your Bags</button></div></Col>
+       
       </Row>
       <Row>
         <Col className="col-sm-2"></Col>
@@ -353,8 +313,7 @@ function App() {
 
       </Row>
       {createComponetRender()}
-      {depositComponetRender()}
-      {withdrawComponetRender()}
+     
 
     </div>
   );
