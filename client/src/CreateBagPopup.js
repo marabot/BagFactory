@@ -2,7 +2,7 @@
 import React, {useState} from "react";
 
 
-function NewSplit({_createBag,closePopupCreate}){
+function NewBag({_createBag,closePopupCreate}){
 
     const [name, setName] = useState('');
     const [receiver, setReceiver] = useState('');
@@ -10,7 +10,7 @@ function NewSplit({_createBag,closePopupCreate}){
     
 
     const createBag = async()=>{                    
-        await _createBag(name, receiver);
+        await _createBag(name);
     };
     
     const closePopup = function(){
@@ -47,4 +47,4 @@ function NewSplit({_createBag,closePopupCreate}){
     );
 }
 
-export default NewSplit;
+export default NewBag;

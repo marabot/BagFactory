@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from "react";
 
-function TipVaults({tip_Vaults, title, showDeposit,showCreate, closeSplit,withDraw, addrUser, network}) {
+function Bags({bags, showCreate, showDeposit, closeSplit,withDraw, addrUser, network}) {
     //alert('tip => ' + tip_Vaults[0].endTime + '---' + Date.now());
   
     const deposit = function(addr) {
@@ -19,11 +19,11 @@ function TipVaults({tip_Vaults, title, showDeposit,showCreate, closeSplit,withDr
     const closeSplit= function(id){
       closeSplit(id);
     }*/
-    const boutDepositRender= function(tip){
-      if(tip.endTime > Date.now()/1000)
+    const boutDepositRender= function(bag){
+      if(bag.endTime > Date.now()/1000)
       {
         return (
-          <button className="btn btn-primary" style={boutonMenu} onClick={()=>deposit(tip.addr)}>Deposit</button>
+          <button className="btn btn-primary" style={boutonMenu} onClick={()=>deposit(bag.addr)}>Deposit</button>
         )
 
       }else
@@ -34,17 +34,17 @@ function TipVaults({tip_Vaults, title, showDeposit,showCreate, closeSplit,withDr
       }
     }
 
-    const htmlButtonCloseSplit= function(tip){
+    const htmlButtonCloseSplit= function(bag){
 
-     if(tip.from === addrUser) {      
-        if(tip.endTime > Date.now()/1000){
+     if(bag.from === addrUser) {      
+        if(bag.endTime > Date.now()/1000){
           return(
-            <div> <button className="btn btn-primary" style={boutonMenu} onClick={()=>closeSplit(tip.addr)}>Close</button></div>
+            <div> <button className="btn btn-primary" style={boutonMenu} onClick={()=>closeSplit(bag.addr)}>Close</button></div>
           )
-        }else if(tip.endTime==1)
+        }else if(bag.endTime==1)
         {
           return(
-          <div> <button className="btn btn-primary" style={boutonMenu} onClick={()=>withdraw(tip.addr)}>WithDraw</button></div>
+          <div> <button className="btn btn-primary" style={boutonMenu} onClick={()=>withdraw(bag.addr)}>WithDraw</button></div>
           )
         }else
         {
@@ -56,25 +56,25 @@ function TipVaults({tip_Vaults, title, showDeposit,showCreate, closeSplit,withDr
     }
 
  
-    function displayTipVaulCard(tip){
-        const amountNotWei = tip.totalAmount/ Math.pow(10,18);
+    function displayTipVaulCard(bag){
+        const amountNotWei = bag.totalAmount/ Math.pow(10,18);
         
         
         return (
             <div style={tipVaultCard}>
               <div style={label} >Name</div>
-              <div>{tip.name}</div>
+              <div>{bag.name}</div>
 
               <div style={label}>From</div>
-              <div style={adressStye}>{tip.from}</div>
+              <div style={adressStye}>{bag.from}</div>
 
               <div style={label}>Receiver</div>
-              <div style={adressStye}>{tip.receiver}</div>
+              <div style={adressStye}>{bag.receiver}</div>
             
               <div style={labelTotalAmount}>Total amount</div>
               <div  >{amountNotWei}</div>
-              <div style={boutDeposit} id="btnDeposit">{boutDepositRender(tip)}</div>
-              {htmlButtonCloseSplit(tip)}
+              <div style={boutDeposit} id="btnDeposit">{boutDepositRender(bag)}</div>
+              {htmlButtonCloseSplit(bag)}
             </div>
 
         );
@@ -161,7 +161,7 @@ function TipVaults({tip_Vaults, title, showDeposit,showCreate, closeSplit,withDr
     return (
       <div id="order-list" className="card">
          <div style={header}>
-                  <div>{title}</div><div style={space}><button className="btn btn-primary" style={boutonMenuCreate} onClick={()=>create()} id="btnCreate">Create Vault</button></div>         
+                 <div style={space}><button className="btn btn-primary" style={boutonMenuCreate} onClick={()=>create()} id="btnCreate">Create bag</button></div>         
          </div>
           
           
@@ -171,10 +171,10 @@ function TipVaults({tip_Vaults, title, showDeposit,showCreate, closeSplit,withDr
                 <div className={"table table-striped mb-0 order-list"}>
                  
                
-                { tip_Vaults.map((tip) =>
+                { bags.map((bag) =>
                 (                  
-                    <div key={tip.id}>
-                      {displayTipVaulCard(tip)}
+                    <div key={bag.id}>
+                      {displayTipVaulCard(bag)}
                    </div>   
              
                 ))}        
@@ -186,4 +186,4 @@ function TipVaults({tip_Vaults, title, showDeposit,showCreate, closeSplit,withDr
       );
 }
 
-export default TipVaults;
+export default Bags;
