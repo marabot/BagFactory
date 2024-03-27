@@ -77,8 +77,6 @@ function App() {
     }
   }
 
- 
-  
 
   const deposit = async (tipVaultAddr, amount) => {   
     try {
@@ -163,6 +161,9 @@ function App() {
 
 
   const update = async () => {
+    console.log("update");
+    console.log(web3);
+    console.log(Network);
     if (web3 != '' && (Network == "11155111" || Network == "1337")) {
       let smartContracts = await getContracts(web3);
       console.log("app 280  smartcontract : ");
@@ -243,7 +244,6 @@ function App() {
       </Helmet>
 
       <Header
-
         setWeb3={setWeb3}
         setAccounts={setAccounts}
         setNetwork={setNetwork}

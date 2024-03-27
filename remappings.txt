@@ -1,0 +1,12 @@
+@chainlink/=node_modules/@chainlink/
+@ensdomains/=node_modules/@ensdomains/
+@eth-optimism/=node_modules/@chainlink/contracts/node_modules/@eth-optimism/
+@openzeppelin/=node_modules/@openzeppelin/
+@uniswap/=node_modules/@uniswap/
+base64-sol/=node_modules/base64-sol/
+chainlink/=node_modules/chainlink/
+hardhat/=node_modules/hardhat/
+link_token/=node_modules/link_token/
+openzeppelin-solidity/=node_modules/openzeppelin-solidity/
+ds-test/=lib/forge-std/lib/ds-test/src/
+forge-std/=lib/forge-std/src

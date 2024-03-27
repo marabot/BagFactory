@@ -1,5 +1,7 @@
 require("@nomiclabs/hardhat-truffle5");
 require('dotenv').config();
+require("@nomicfoundation/hardhat-foundry");
+
 
 module.exports = {
   solidity: {
