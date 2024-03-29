@@ -85,9 +85,9 @@ contract BagMain{
          function getTokens() 
             external 
             view 
-            returns(VaultStruct.Token[] memory) {  
+            returns(VaultStruct.Token[] memory _tokens) {  
 
-            VaultStruct.Token[] memory _tokens = new VaultStruct.Token[](tokenList.length);
+            _tokens = new VaultStruct.Token[](tokenList.length);
             for (uint i = 0; i < tokenList.length; i++) {
                 _tokens[i] = VaultStruct.Token(
                 tokens[tokenList[i]].ticker,
