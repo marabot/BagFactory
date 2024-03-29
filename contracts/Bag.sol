@@ -83,7 +83,7 @@ contract Bag{
           }
         }          
 
-        function getWethPrice() internal returns (uint256 wethPrice){                   
+        function getWethPrice() internal view returns (uint256 wethPrice){                   
             AggregatorV3Interface wethOracle = AggregatorV3Interface(0x13e3Ee699D1909E989722E753853AE30b17e08c5);
             (
                 /*uint80 roundID */,
@@ -96,7 +96,6 @@ contract Bag{
         }
 
         function applyStrategie() internal  {
-
             
             uint256[] memory tokenHolding = new uint256[](tokenList.length);
             uint256[] memory tokenHoldingUSDC = new uint256[](tokenList.length);           
@@ -149,7 +148,7 @@ contract Bag{
             }
         }        
 
-        function getPrices() internal returns (uint256[] memory prices){
+        function getPrices() internal view returns (uint256[] memory prices){
                        
             prices= new uint256[](tokenList.length);
             for (uint8 i =0;i<tokenList.length;i++){
@@ -158,7 +157,7 @@ contract Bag{
             }
         }
 
-        function isSoldtoken(bytes32 _ticker, bytes32[] memory _soldTokens) internal view returns (bool resp){
+        function isSoldtoken(bytes32 _ticker, bytes32[] memory _soldTokens) internal pure returns (bool resp){
               for (uint i = 0 ; i < _soldTokens.length;i++){
                     if (_soldTokens[i]== _ticker) resp = true;
               }
@@ -245,7 +244,7 @@ contract Bag{
             external {                 
             tokensByTick[_ticker] = VaultStruct.Token(_ticker, _tokenAddress,_chainLinkAddress);
             tokensByAddress[_tokenAddress] = tokensByTick[_ticker];      
-            tokenList.push(_ticker);           
+            tokenList.push(_ticker);   
         }      
 
         function removeToken (
