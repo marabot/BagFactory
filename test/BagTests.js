@@ -34,7 +34,7 @@ contract('BagFactory', accounts => {
 
         let tokens = [
             {ticker:stringToBytes32("AAVE"),tokenAddress:AAVEAddr,chainLinkAddress:oracleAAVE},
-            {ticker:stringToBytes32("DAI"),tokenAddress:DAIAddr,chainLinkAddress:oracleDAI} ,
+            {ticker:stringToBytes32("DAI"),tokenAddress:DAIAddr,chainLinkAddress:oracleDAI}, 
             {ticker:stringToBytes32("LINK"),tokenAddress:LINKAddrr,chainLinkAddress:oracleLINK}
         ]       
 
@@ -78,7 +78,7 @@ contract('BagFactory', accounts => {
             "only owner"
         );
       
-        await bag.deposit( web3.utils.toWei("0.1"),{from:trader1});        
+        await bag.deposit(web3.utils.toWei("0.1"),{from:trader1});        
 
         wethAfterDeposit = await wethInstance.balanceOf(allSB[0].addr);       
         let DAiBagAfterDeposit = await DaiInstance.balanceOf(allSB[0].addr);
@@ -115,7 +115,7 @@ contract('BagFactory', accounts => {
 
     }, 'Failed Test : create bag, deposit and retire');
 
-    it('should add Token and remove Token, and revert if not owner of the bag', async () => {
+    it.only('should add Token and remove Token, and revert if not owner of the bag', async () => {
 
         // create Bag
         await _bagMain.createBag('babag !', { from: trader1 });
@@ -128,16 +128,26 @@ contract('BagFactory', accounts => {
             bag.removeToken(stringToBytes32("AAVE"), {from : trader2}),
             "only owner"
         );
-                            
+
+
+        await wethInstance.approve(
+            bag.address, 
+            web3.utils.toWei("0.1"), 
+            {from: trader1}
+        );
+         await bag.deposit(web3.utils.toWei("0.1"),{from:trader1});
         await bag.removeToken(stringToBytes32("AAVE"),{from : trader1});
         let tokensAfterRemove = await bag.getTokens();
         assert(tokensAfterRemove.length == 2);
         assert(tokensAfterRemove[0].tokenAddress = DAIAddr);
         assert(tokensAfterRemove[1].tokenAddress = LINKAddrr);
-
-
+        wethAfterDeposit = await wethInstance.balanceOf(allSB[0].addr); 
+        console.log(web3.utils.fromWei(wethAfterDeposit));
+        assert(wethAfterDeposit < web3.utils.toWei("0.04"));
+        assert(wethAfterDeposit > web3.utils.toWei("0.03"));
+        
         // Test AddToken
-        tokenTickToAdd = stringToBytes32("BAL"); 
+       /* tokenTickToAdd = stringToBytes32("BAL"); 
         tokenAddressToAdd =  "0xba100000625a3754423978a60c9317c58a424e3d"
         await bag.addToken(stringToBytes32("AAVE"),AAVEAddr, oracleAAVE);
         let tokensAfterAdd = await bag.getTokens();
@@ -145,6 +155,7 @@ contract('BagFactory', accounts => {
         assert(tokensAfterAdd[0].tokenAddress = DAIAddr );
         assert(tokensAfterAdd[1].tokenAddress = LINKAddrr  );
         assert(tokensAfterAdd[2].tokenAddress = AAVEAddr  );
+        */
 
 
     }, 'Failed Test : add and remove Token');

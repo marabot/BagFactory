@@ -10,7 +10,6 @@ library VaultStruct{
         }
 
         struct Bag {
-            uint id;
             address addr;
             string name;
             address from;                      

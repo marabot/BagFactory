@@ -13,6 +13,6 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.1.1",
     "@nomiclabs/hardhat-truffle5": "^2.0.7",
-    "hardhat": "^2.21.0"
+    "hardhat": "^2.20.1"
   }
 }

@@ -18,7 +18,6 @@ contract BagMain{
                                    
         address admin;       
         address swapRouter;
-        uint nextBagId;  
 
         // Tokens
         mapping(bytes32 => VaultStruct.Token) public tokens;
@@ -55,8 +54,8 @@ contract BagMain{
                 tokenChainLinkAddress[i] = tokens[tokenList[i]].chainLinkAddress;                        
             }
 
-            nextBagId++;
-            Bag newbag = new Bag(nextBagId,_name,msg.sender, address(this), tokensTickers,tokensAddress,tokenChainLinkAddress, swapRouter);
+           
+            Bag newbag = new Bag(_name,msg.sender, address(this), tokensTickers,tokensAddress,tokenChainLinkAddress, swapRouter);
 
             address[] storage tp = bagsByOwner[msg.sender];
             tp.push(address(newbag));
