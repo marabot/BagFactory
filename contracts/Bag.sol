@@ -3,7 +3,8 @@ pragma solidity 0.8.19;
 pragma abicoder v2;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import './libraries/VaultStruct.sol';
+import './libraries/BagStruct.sol';
+import './libraries/TokenLib.sol';
 
 import {AggregatorV3Interface} from  "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
@@ -22,8 +23,8 @@ contract Bag{
         address[] tipsOwnersList;
         
         // Tokens
-        mapping(bytes32 => VaultStruct.Token) public tokensByTick;
-        mapping(address => VaultStruct.Token) public tokensByAddress;
+        mapping(bytes32 => BagStruct.Token) public tokensByTick;
+        mapping(address => BagStruct.Token) public tokensByAddress;
         mapping(bytes32 => AggregatorV3Interface) internal dataFeeds;
 
         bytes32[] public tokenList;        
@@ -31,19 +32,14 @@ contract Bag{
         uint256[] public tokenHolding;
         uint256[] public tokenHoldingUSDC;          
         uint256[] prices;
-        uint256 wethPrice ;
+        uint256 wethPrice;
         uint256 balWETH;
         uint256 totalAmountUSDC;
         uint256 averageUSDC;   
 
-        struct Token {
-            bytes32 ticker;
-            address tokenAddress; 
-        }      
-
         address owner; 
-        address BagMainAddr;             
-          
+        address BagMainAddr;  
+                
         ////////// CONSTRUCTOR ////////////
         constructor( 
             string memory _name,
@@ -57,8 +53,8 @@ contract Bag{
              ){
             for(uint i=0;i<_tokensTickers.length;i++)
             {                
-                tokensByTick[_tokensTickers[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i],_chainlinkAddr[i]);
-                tokensByAddress[_tokensAddress[i]] = VaultStruct.Token(_tokensTickers[i], _tokensAddress[i],_chainlinkAddr[i]);
+                tokensByTick[_tokensTickers[i]] = BagStruct.Token(_tokensTickers[i], _tokensAddress[i],_chainlinkAddr[i]);
+                tokensByAddress[_tokensAddress[i]] = BagStruct.Token(_tokensTickers[i], _tokensAddress[i],_chainlinkAddr[i]);
                 tokenList.push(_tokensTickers[i]);     
                 dataFeeds[_tokensTickers[i]] = AggregatorV3Interface(_chainlinkAddr[i]);                         
             }
@@ -67,7 +63,7 @@ contract Bag{
             BagMainAddr = _bagMain; 
             tokenHolding = new uint256[](tokenList.length);
             tokenHoldingUSDC = new uint256[](tokenList.length);  
-            swapRouter = _swapRouter;       
+            swapRouter = _swapRouter;   
           }             
         
         
@@ -88,39 +84,35 @@ contract Bag{
           }
         }          
 
-        function getWethPrice() internal view returns (uint256 _wethPrice){                   
-            AggregatorV3Interface wethOracle = AggregatorV3Interface(0x13e3Ee699D1909E989722E753853AE30b17e08c5);
-            (
-                /*uint80 roundID */,
-                int answer,
-                /*uint startedAt*/,
-                /*uint timeStamp*/,
-                /*uint80 answeredInRound*/
-            ) = wethOracle.latestRoundData();
-            _wethPrice = uint256(answer) ;      
-        }
-
+   
         function applyStrategie() internal  {
             
             prices = getPrices();
-            wethPrice = getWethPrice(); 
-            bytes32[] memory soldTokens;
+            wethPrice = TokenLib.getWethPrice(); 
+            bool[] memory soldTokens = new bool[](tokenList.length);
             uint256 part;       
             totalAmountUSDC = 0;
 
             updateHoldingtokensValue();
  
-            averageUSDC = totalAmountUSDC / tokenList.length;
+            averageUSDC = totalAmountUSDC / tokenList.length;          
 
             sellOverweightTokens(soldTokens);           
 
             balWETH = IERC20(weth).balanceOf(address(this));
-            part = balWETH / (tokenList.length - soldTokens.length);
+            
+            uint256 soldTokensCount = 0;
+             for (uint i = 0 ; i < soldTokens.length;i++)
+            {
+                if (soldTokens[i])soldTokensCount++;
+            }
+
+            part = balWETH / (tokenList.length - soldTokensCount);
             
             BuytokensWithWeth(soldTokens, part);   
 
             updateHoldingtokensValue();        
-            logTokens();
+           // logTokens();
         }        
 
         //  get amount and amount in USDC for each tokens
@@ -131,42 +123,37 @@ contract Bag{
                tokenHoldingUSDC[i] = tokenHolding[i] * prices[i] / (10**8); 
                totalAmountUSDC+= tokenHoldingUSDC[i];              
             }
-            console.log("update");
-           
+         //   console.log("update");          
         }
 
-        function sellOverweightTokens( bytes32[] memory _soldTokens) internal {
-            uint8 soldtokensindex = 0;
+        function sellOverweightTokens( bool[] memory _soldTokens) internal {
+            uint8 soldtokensindex = 0;    
 
             for (uint i = 0 ; i < tokenList.length;i++)
             {   
                 if (tokenHoldingUSDC[i]>averageUSDC){
                     if (tokenHoldingUSDC[i]- averageUSDC > (averageUSDC/10)){
                         uint256 amountUSD = averageUSDC/20;
-                        uint256 amountInWETH = amountUSD / wethPrice;
-                        uint256 amountOut = (amountUSD /  prices[i] * (10**8))*98/100;                                              
+                        uint256 amountIn = amountUSD * prices[i];
+                        uint256 amountOut = (amountUSD /  wethPrice * (10**8))*50/100;      
 
-                        swapExactInputSingle(amountInWETH,tokensByTick[tokenList[i]].tokenAddress,weth, amountOut);
-                        _soldTokens[soldtokensindex] = tokenList[i];
-                        soldtokensindex++;
+                        swapExactInputSingle(tokenHolding[i]/20,tokensByTick[tokenList[i]].tokenAddress,weth, amountOut);
+                        _soldTokens[i] = true;                        
                     }
                 }            
-            }
-            console.log("sell");
-            logTokens();
+            }          
         }          
 
-        function BuytokensWithWeth(bytes32[] memory _soldTokens, uint256 _part) internal {
+        function BuytokensWithWeth(bool[] memory _soldTokens, uint256 _part) internal {
+            
             for (uint i = 0 ; i < tokenList.length;i++)
             {   
-               if (!isSoldtoken(tokenList[i], _soldTokens)){
+               if (!_soldTokens[i]){
                     uint256 amountOut = _part *98/100;
-                    console.log();
+                   
                     swapExactInputSingle(_part, weth, tokensByTick[tokenList[i]].tokenAddress,  amountOut);
                }
             }
-            console.log("buy");
-            logTokens();
         }          
 
         function getPrices() internal view returns (uint256[] memory _prices){
@@ -174,16 +161,11 @@ contract Bag{
             _prices= new uint256[](tokenList.length);
             for (uint8 i =0;i<tokenList.length;i++){
               
-                _prices[i] = getChainlinkDataFeedLatestAnswer(tokenList[i]);               
+                _prices[i] = TokenLib.getChainlinkDataFeedLatestAnswer(tokenList[i], dataFeeds[tokenList[i]]);               
             }
         }
 
-        function isSoldtoken(bytes32 _ticker, bytes32[] memory _soldTokens) internal pure returns (bool resp){
-              for (uint i = 0 ; i < _soldTokens.length;i++){
-                    if (_soldTokens[i]== _ticker) resp = true;
-              }
-        }   
-
+       
         function swapExactInputSingle(uint256 _amountIn, address _tokenToSell, address _tokenToBuy, uint256 _minAmountOut) internal returns (uint256 amountOut) {
                   
             // Approve the router to spend USDC.
@@ -205,34 +187,25 @@ contract Bag{
                     sqrtPriceLimitX96: 0
                 });
 
-           /* console.log(
+            /* console.log(
                             "amount in  %s  %s from  %s",
                             _amountIn,
                             _tokenToBuy,
                             _tokenToSell
                         );
 
-*/
+            */
             // The call to `exactInputSingle` executes the swap.
             amountOut = ISwapRouter(swapRouter).exactInputSingle(params);          
         }       
 
-        function getBalance()external view returns (uint){
-            return address(this).balance;
-        }
-
-        // TODO : faire une structure pour retourner les tokens et qtité possédée 
-        function getBalances()external view returns (uint){
-            return address(this).balance;
-        }       
-   
         function getTokens() 
             external 
             view 
-            returns(VaultStruct.Token[] memory) {
-            VaultStruct.Token[] memory _tokens = new VaultStruct.Token[](tokenList.length);
+            returns(BagStruct.Token[] memory) {
+            BagStruct.Token[] memory _tokens = new BagStruct.Token[](tokenList.length);
             for (uint i = 0; i < tokenList.length; i++) {
-                _tokens[i] = VaultStruct.Token(
+                _tokens[i] = BagStruct.Token(
                 tokensByTick[tokenList[i]].ticker,
                 tokensByTick[tokenList[i]].tokenAddress,
                 tokensByTick[tokenList[i]].chainLinkAddress
@@ -241,22 +214,6 @@ contract Bag{
             return _tokens;
         }
     
-        function getChainlinkDataFeedLatestAnswer(bytes32 _ticker) public view returns (uint256) {
-                    
-           // prettier-ignore
-            (
-                /*uint80 roundID */,
-                int answer,
-                /*uint startedAt*/,
-                /*uint timeStamp*/,
-                /*uint80 answeredInRound*/
-            ) = dataFeeds[_ticker].latestRoundData();
-
-            uint256 ret = uint256 (answer);
-           //uint256 ret = 8;
-            return ret;
-        }
-
         function addToken (
             bytes32 _ticker,
             address _tokenAddress,
@@ -264,7 +221,7 @@ contract Bag{
             onlyOwner
             external {   
 
-            tokensByTick[_ticker] = VaultStruct.Token(_ticker, _tokenAddress,_chainLinkAddress);
+            tokensByTick[_ticker] = BagStruct.Token(_ticker, _tokenAddress,_chainLinkAddress);
             tokensByAddress[_tokenAddress] = tokensByTick[_ticker];      
             tokenList.push(_ticker);
 
@@ -273,30 +230,28 @@ contract Bag{
 
             dataFeeds[_ticker] = AggregatorV3Interface(_chainLinkAddress);
 
-            //applyStrategie();  
+            applyStrategie();  
         }  
 
-        function logTokens() internal {
-           /* console.log("token list count", tokenList.length);
+        function logs() internal {
+          
             console.log("token 1 : %s", tokensByTick[tokenList[0]].tokenAddress);
-            console.log("token 2 : %s", tokensByTick[tokenList[1]].tokenAddress);
-            console.log("token 3 : %s", tokensByTick[tokenList[2]].tokenAddress);*/
+            console.log("token 2 : %s", tokensByTick[tokenList[1]].tokenAddress);           
 
-            console.log("tokenHolding 1:", tokenHoldingUSDC[0]);
-             console.log("tokenHolding 2:", tokenHolding[1]);
-              console.log("tokenHolding 3:", prices[0]);
+           /* console.log("tokenHolding 1:", tokenHoldingUSDC[0]);
+            console.log("tokenHolding 2:", tokenHolding[1]);
+            console.log("tokenHolding 3:", prices[0]);*/
         }    
 
         function removeToken (
-            bytes32 ticker)           
+            bytes32 _ticker)           
             onlyOwner
             external {                 
             
             prices = getPrices();
-            logTokens();
             for(uint256  i ; i < tokenList.length ; i++){
 
-                if (tokenList[i] == ticker ){
+                if (tokenList[i] == _ticker ){
                     if (tokenHolding[i]!=0){
                         uint256 amountOut = (tokenHolding[i] /  prices[i] * (10**8))*98/100; 
                        
@@ -306,10 +261,14 @@ contract Bag{
                     tokenList[i] =  tokenList[tokenList.length -1];                    
                     tokenList.pop();
                 }                
-            }       
-            tokensByAddress[tokensByTick[ticker].tokenAddress] = VaultStruct.Token(0x0, address(0), address(0));
-            tokensByTick[ticker] = VaultStruct.Token(0x0, address(0), address(0));
-           // applyStrategie();    
+            }      
+
+            tokenHolding = new uint256[](tokenList.length);
+            tokenHoldingUSDC = new uint256[](tokenList.length);  
+             console.log("bal weth to buy :", IERC20(weth).balanceOf(address(this)));
+            tokensByAddress[tokensByTick[_ticker].tokenAddress] = BagStruct.Token(0x0, address(0), address(0));
+            tokensByTick[_ticker] = BagStruct.Token(0x0, address(0), address(0));
+            applyStrategie();    
         }  
                
         fallback() external payable {
@@ -319,8 +278,8 @@ contract Bag{
         receive() external payable {}
         
         // TODO : retourner plus d'infos sur la composition du bag
-        function getBag() external view returns(VaultStruct.Bag memory){
-            return VaultStruct.Bag(address(this),  name, owner, totalAmount);
+        function getBag() external view returns(BagStruct.Bag memory){
+            return BagStruct.Bag(address(this),  name, owner, totalAmount);
         }            
 
         modifier tokenExist(bytes32 ticker) {
@@ -346,6 +305,4 @@ contract Bag{
             require(msg.sender == BagMainAddr, 'only BagMain');
             _;
         }
-
-
 }

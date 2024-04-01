@@ -5,7 +5,7 @@ import 'forge-std/Test.sol';
 import {BagMain} from'../../contracts/BagMain.sol';
 import {Bag} from '../../contracts/Bag.sol';
 import {IBag} from'../../contracts/libraries/IBag.sol';
-import '../../contracts/libraries/VaultStruct.sol';
+import '../../contracts/libraries/BagStruct.sol';
 import {IWETH} from'../../contracts/libraries/IWETH.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
@@ -24,7 +24,7 @@ contract BagmainTest is Test, HelperContract{
     address constant swaprouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
 
     function setUp() public {
-        bagmain = new BagMain(new VaultStruct.Token[](0),swaprouter);
+        bagmain = new BagMain(new BagStruct.Token[](0),swaprouter);
         //vm.prank(bob);
         vm.deal(bob, 100);
         IWETH(wethAddr).deposit(10);
@@ -32,7 +32,7 @@ contract BagmainTest is Test, HelperContract{
     }
 
     function test_first() public view {
-        VaultStruct.Token[] memory tokens = bagmain.getTokens();
+        BagStruct.Token[] memory tokens = bagmain.getTokens();
         uint256 tokensL = tokens.length;
         assertEq(tokensL,0);
     }
@@ -44,7 +44,7 @@ contract BagmainTest is Test, HelperContract{
         Bag  bag = Bag(bagAddr);
         bag.deposit(10);
 /*
-        VaultStruct.Token[] memory tokens = bag.getTokens();
+        BagStruct.Token[] memory tokens = bag.getTokens();
         uint256 tokensL = tokens.length;
         assertEq(tokensL,0);
         address owner = bag.getOwner();

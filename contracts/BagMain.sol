@@ -4,7 +4,8 @@ pragma abicoder v2;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import './Bag.sol';
-import './libraries/VaultStruct.sol';
+import './libraries/BagStruct.sol';
+import './libraries/TokenLib.sol';
 
 contract BagMain{
         
@@ -18,9 +19,9 @@ contract BagMain{
                                    
         address admin;       
         address swapRouter;
-
+        
         // Tokens
-        mapping(bytes32 => VaultStruct.Token) public tokens;
+        mapping(bytes32 => BagStruct.Token) public tokens;
         bytes32[] public tokenList;
 
         event TipVaultCreated(address indexed _from, address _addr);
@@ -29,12 +30,13 @@ contract BagMain{
         event TipVaultWithdraw(address indexed _from);
 
         
-        constructor(VaultStruct.Token[] memory _tokens,
+        constructor(BagStruct.Token[] memory _tokens,
                     address _swapRouter){
             admin= msg.sender;     
             swapRouter = _swapRouter;
+           
 
-             for(uint i=0;i<_tokens.length;i++)
+            for(uint i=0;i<_tokens.length;i++)
             {                
                  tokens[_tokens[i].ticker] = _tokens[i];                
                  tokenList.push(_tokens[i].ticker);               
@@ -70,8 +72,8 @@ contract BagMain{
            return bagsByOwner[_owner];     
         }
         
-        function getAllBags() external view returns (VaultStruct.Bag[] memory){
-           VaultStruct.Bag[] memory  ret = new VaultStruct.Bag[](allBags.length);
+        function getAllBags() external view returns (BagStruct.Bag[] memory){
+           BagStruct.Bag[] memory  ret = new BagStruct.Bag[](allBags.length);
 
            for(uint i =0 ;i<allBags.length;i++)
            {               
@@ -84,11 +86,11 @@ contract BagMain{
          function getTokens() 
             external 
             view 
-            returns(VaultStruct.Token[] memory _tokens) {  
+            returns(BagStruct.Token[] memory _tokens) {  
 
-            _tokens = new VaultStruct.Token[](tokenList.length);
+            _tokens = new BagStruct.Token[](tokenList.length);
             for (uint i = 0; i < tokenList.length; i++) {
-                _tokens[i] = VaultStruct.Token(
+                _tokens[i] = BagStruct.Token(
                 tokens[tokenList[i]].ticker,
                 tokens[tokenList[i]].tokenAddress,
                 tokens[tokenList[i]].chainLinkAddress
@@ -107,7 +109,7 @@ contract BagMain{
             address _chainlinkAddress)
             onlyAdmin()
             external {
-            tokens[_ticker] = VaultStruct.Token(_ticker, _tokenAddress,_chainlinkAddress);                
+            tokens[_ticker] = BagStruct.Token(_ticker, _tokenAddress,_chainlinkAddress);                
             tokenList.push(_ticker);     
         }
 

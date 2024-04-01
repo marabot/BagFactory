@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 pragma abicoder v2;
-import './VaultStruct.sol';
+import './BagStruct.sol';
 
 
 
@@ -22,7 +22,7 @@ interface IBag{
         function getTokens() 
             external 
             view 
-            returns(VaultStruct.Token[] memory) ;
+            returns(BagStruct.Token[] memory) ;
     
        
 

@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 
-library VaultStruct{
+library BagStruct{
      struct Token {
             bytes32 ticker;
             address tokenAddress; 

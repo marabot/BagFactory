@@ -4,7 +4,7 @@ const BagMain = artifacts.require('BagMain.sol');
 const Dai = artifacts.require("Mocks/Dai.sol")
 const Pep = artifacts.require("Mocks/PEp.sol")
 const Side = artifacts.require("Mocks/Side.sol")
-const SupraOracleMock = artifacts.require('mocks/SupraOracleMock.sol');
+const BagStruct = artifacts.require("libraries/BagStruct.sol")
 const SwapRouterMock = artifacts.require('mocks/SwapRouterMock.sol');
 //const TransferHelperMock = artifacts.require('@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol');
 
@@ -36,17 +36,11 @@ module.exports = async function (deployer, _network, accounts) {
     */
 
 
-    const dai = await Dai.new();
-    Dai.setasDeployed(dai);
     
-    const pep = await Pep.new();
-    Pep.setasDeployed(pep);
+    const bagStruct = await BagStruct();
+    BagStruct.setasDeployed(bagStruct);
+
     
-    const side = await Side.new();
-    Side.setasDeployed(side);
-    
-    const supraOracleMock = await SupraOracleMock.new();
-    SupraOracleMock.setasDeployed(supraOracleMock);
     
     const swapRouterMock = await SwapRouterMock.new();
     SwapRouterMock.setasDeployed(swapRouterMock);
@@ -56,6 +50,6 @@ module.exports = async function (deployer, _network, accounts) {
     const LINKAddrr= "0x514910771af9ca656af840dff83e8264ecf986ca";
 
 
-    const bagMain = await BagMain.new(["WETH","DAI", "LINK"],[WETHAddr,DAIAddr,LINKAddrr],swaprouter, supraOracleMock.address);
+    const bagMain = await BagMain.new(["WETH","DAI", "LINK"],[WETHAddr,DAIAddr,LINKAddrr],swaprouter, supraOracleMock.address,bagStruct);
     BagMain.setasDeployed(bagMain);
 }

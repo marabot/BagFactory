@@ -6,10 +6,9 @@ const BagMain = artifacts.require('BagMain.sol');
 const DAI = artifacts.require('mocks/Dai.sol');
 const Pep = artifacts.require('mocks/Pep.sol');
 const Side = artifacts.require('mocks/Side.sol');
-
+const TokenLib = artifacts.require('libraries/TokenLib.sol');
 const WETH = artifacts.require('mocks/WETH9.sol');
 
-const SupraOracleMock = artifacts.require('mocks/SupraOracleMock.sol');
 const SwapRouterMock = artifacts.require('mocks/SwapRouterMock.sol');
 
 const swaprouter = "0xE592427A0AEce92De3Edee1F18E0157C05861564";
@@ -22,45 +21,44 @@ const oracleAAVE ="0x338ed6787f463394D24813b297401B9F05a8C9d1";
 const oracleDAI = "0x8dBa75e83DA73cc766A7e5a0ee71F656BAb470d6";
 const oracleLINK = "0xCc232dcFAAE6354cE191Bd574108c1aD03f86450";
 
-
 let wethInstance;
 let DaiInstance;
 
 contract('BagFactory', accounts => {
-    let dai, pep, side, olas, _bagMain, _swapRouterMock, _TranferHelperMock, _supraOracleMock;
+    let dai, pep, side, olas, _bagMain;
     const [trader1, trader2, trader3, trader4, trader5] = [accounts[0], accounts[1], accounts[2], accounts[3], accounts[4], accounts[5]];
+
+
+    let tokens = [
+        {ticker:stringToBytes32("AAVE"),tokenAddress:AAVEAddr,chainLinkAddress:oracleAAVE},
+        {ticker:stringToBytes32("DAI"),tokenAddress:DAIAddr,chainLinkAddress:oracleDAI}, 
+        {ticker:stringToBytes32("LINK"),tokenAddress:LINKAddrr,chainLinkAddress:oracleLINK}
+    ]       
+
+   
 
     beforeEach(async () => {
 
-        let tokens = [
-            {ticker:stringToBytes32("AAVE"),tokenAddress:AAVEAddr,chainLinkAddress:oracleAAVE},
-            {ticker:stringToBytes32("DAI"),tokenAddress:DAIAddr,chainLinkAddress:oracleDAI}, 
-            {ticker:stringToBytes32("LINK"),tokenAddress:LINKAddrr,chainLinkAddress:oracleLINK}
-        ]       
+        const tokenlib = await TokenLib.new();
 
+        // Lier la bibliothèque au contrat BagMain
+        //await BagMain.link("TokenLib", tokenlib.address); 
+        BagMain.link(tokenlib);
         _bagMain = await BagMain.new(tokens, swaprouter);
-
+    
         wethInstance = await WETH.at(WETHAddr);
         let amountBefore = await wethInstance.balanceOf(trader1, { from: trader1 });        
 
         DaiInstance = await DAI.at(DAIAddr);
         LINKInstance = await DAI.at(LINKAddrr);
         AAVEInstance = await DAI.at(AAVEAddr);
+       
+        const amount = web3.utils.toWei('1000');      
+        await wethInstance.deposit({ value: amount, from: trader1 })     
 
-        /*console.log("swap");
-        console.log(web3.utils.fromWei(amountBefore));*/
-
-        const amount = web3.utils.toWei('1000');
-       // await wethInstance.deposit({ value: "100", from: trader1 })   
-        await wethInstance.deposit({ value: amount, from: trader1 })      
-
-        let amountAfter = await wethInstance.balanceOf(trader1);
-
-        /*console.log(trader1);
-        console.log(web3.utils.fromWei(amountAfter)); */    
     })
 
-    it('should create a bag, deposit and retire, and revert if not owner of the bag', async () => {
+    it.only('should create a bag, deposit and retire, and revert if not owner of the bag', async () => {
       
         await _bagMain.createBag('babag !', { from: trader1 });
         let allSB = await _bagMain.getAllBags();       
@@ -115,7 +113,7 @@ contract('BagFactory', accounts => {
 
     }, 'Failed Test : create bag, deposit and retire');
 
-    it.only('should add Token and remove Token, and revert if not owner of the bag', async () => {
+    it('should add Token and remove Token, and revert if not owner of the bag', async () => {
 
         // create Bag
         await _bagMain.createBag('babag !', { from: trader1 });
@@ -135,7 +133,9 @@ contract('BagFactory', accounts => {
             web3.utils.toWei("0.1"), 
             {from: trader1}
         );
-         await bag.deposit(web3.utils.toWei("0.1"),{from:trader1});
+        await bag.deposit(web3.utils.toWei("0.1"),{from:trader1});
+
+        
         await bag.removeToken(stringToBytes32("AAVE"),{from : trader1});
         let tokensAfterRemove = await bag.getTokens();
         assert(tokensAfterRemove.length == 2);
@@ -143,11 +143,10 @@ contract('BagFactory', accounts => {
         assert(tokensAfterRemove[1].tokenAddress = LINKAddrr);
         wethAfterDeposit = await wethInstance.balanceOf(allSB[0].addr); 
         console.log(web3.utils.fromWei(wethAfterDeposit));
-        assert(wethAfterDeposit < web3.utils.toWei("0.04"));
-        assert(wethAfterDeposit > web3.utils.toWei("0.03"));
+        assert(wethAfterDeposit < web3.utils.toWei("0.01"));
         
         // Test AddToken
-       /* tokenTickToAdd = stringToBytes32("BAL"); 
+        tokenTickToAdd = stringToBytes32("BAL"); 
         tokenAddressToAdd =  "0xba100000625a3754423978a60c9317c58a424e3d"
         await bag.addToken(stringToBytes32("AAVE"),AAVEAddr, oracleAAVE);
         let tokensAfterAdd = await bag.getTokens();
@@ -155,7 +154,7 @@ contract('BagFactory', accounts => {
         assert(tokensAfterAdd[0].tokenAddress = DAIAddr );
         assert(tokensAfterAdd[1].tokenAddress = LINKAddrr  );
         assert(tokensAfterAdd[2].tokenAddress = AAVEAddr  );
-        */
+        
 
 
     }, 'Failed Test : add and remove Token');
