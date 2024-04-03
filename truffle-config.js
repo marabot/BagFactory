@@ -62,11 +62,24 @@ module.exports = {
       network_id: 42,
       gas: 4000000      //make sure this gas allocation isn't over 4M, which is the max
     },
+    optimismSepolia: {
+    provider: ()=> new HDWalletProvider(
+      process.env.PRIVATE_KEY_FORK_OPT,
+      process.env.ALCHEMY_URL_OPTIMISM_SEPOLIA
+    ),
+    network_id: 11155420,
+    gas: 6000000            
+    }
+    ,
 
     development: {
+      provider: ()=> new HDWalletProvider(
+        process.env.PRIVATE_KEY_FORK_OPT,
+        `https://opt-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY_OPT}`
+      ),
       host: "127.0.0.1",
-      port: 7545,
-      network_id: "*" // Match any network id
+      port: 8545,
+      network_id: "31337" // Match any network id
     }
   },
 

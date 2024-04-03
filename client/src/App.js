@@ -37,6 +37,7 @@ function App() {
 
   const createBag = async (_name) => {
     //console.log(web3);
+    console.log("contracts");
     console.log(contracts);
     await contracts.bagMain.methods.createBag(_name).send({ from: userAddr });
     const myBags = await contracts.bagMain.methods.getAllBags().call();
@@ -161,10 +162,12 @@ function App() {
 
 
   const update = async () => {
+  
     console.log("update");
     console.log(web3);
     console.log(Network);
-    if (web3 != '' && (Network == "11155111" || Network == "1337")) {
+   // if (web3 != '' && (Network == "11155111" || Network == "1337" || Network == "31337")) {
+    if (web3 != '') {
       let smartContracts = await getContracts(web3);
       console.log("app 280  smartcontract : ");
       console.log(smartContracts);

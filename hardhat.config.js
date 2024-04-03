@@ -16,7 +16,7 @@ module.exports = {
     hardhat :{
         forking: {
         enabled: true,        
-        url: `https://opt-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+        url: `https://opt-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY_OPT}`,
         blockNumber: 19406433,
         accounts: [
           "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",

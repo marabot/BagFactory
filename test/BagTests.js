@@ -28,14 +28,11 @@ contract('BagFactory', accounts => {
     let dai, pep, side, olas, _bagMain;
     const [trader1, trader2, trader3, trader4, trader5] = [accounts[0], accounts[1], accounts[2], accounts[3], accounts[4], accounts[5]];
 
-
     let tokens = [
         {ticker:stringToBytes32("AAVE"),tokenAddress:AAVEAddr,chainLinkAddress:oracleAAVE},
         {ticker:stringToBytes32("DAI"),tokenAddress:DAIAddr,chainLinkAddress:oracleDAI}, 
         {ticker:stringToBytes32("LINK"),tokenAddress:LINKAddrr,chainLinkAddress:oracleLINK}
     ]       
-
-   
 
     beforeEach(async () => {
 
@@ -54,8 +51,7 @@ contract('BagFactory', accounts => {
         AAVEInstance = await DAI.at(AAVEAddr);
        
         const amount = web3.utils.toWei('1000');      
-        await wethInstance.deposit({ value: amount, from: trader1 })     
-
+        await wethInstance.deposit({ value: amount, from: trader1 });
     })
 
     it.only('should create a bag, deposit and retire, and revert if not owner of the bag', async () => {
@@ -118,8 +114,7 @@ contract('BagFactory', accounts => {
         // create Bag
         await _bagMain.createBag('babag !', { from: trader1 });
         let allSB = await _bagMain.getAllBags();      
-        let bag = await Bag.at(allSB[0].addr);
-        
+        let bag = await Bag.at(allSB[0].addr);        
      
         // test removeToken
         await truffleAssert.reverts(
@@ -127,14 +122,12 @@ contract('BagFactory', accounts => {
             "only owner"
         );
 
-
         await wethInstance.approve(
             bag.address, 
             web3.utils.toWei("0.1"), 
             {from: trader1}
         );
         await bag.deposit(web3.utils.toWei("0.1"),{from:trader1});
-
         
         await bag.removeToken(stringToBytes32("AAVE"),{from : trader1});
         let tokensAfterRemove = await bag.getTokens();
@@ -153,9 +146,7 @@ contract('BagFactory', accounts => {
         assert(tokensAfterAdd.length == 3);
         assert(tokensAfterAdd[0].tokenAddress = DAIAddr );
         assert(tokensAfterAdd[1].tokenAddress = LINKAddrr  );
-        assert(tokensAfterAdd[2].tokenAddress = AAVEAddr  );
-        
-
+        assert(tokensAfterAdd[2].tokenAddress = AAVEAddr  );      
 
     }, 'Failed Test : add and remove Token');
 

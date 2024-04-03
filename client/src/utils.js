@@ -12,8 +12,10 @@ const getWeb3 = () => {
         const web3 = new Web3(window.ethereum);
         try {
           // Request account access if needed
+          console.log("web3 enabled");
           await window.ethereum.enable();
           // Acccounts now exposed
+          console.log("web3 enabled");
           resolve(web3);
         } catch (error) {
           reject(error);
@@ -28,8 +30,9 @@ const getWeb3 = () => {
       }
       // Fallback to localhost; use dev console port by default...
       else {
+        console.log("8545");
         const provider = new Web3.providers.HttpProvider(
-          "http://localhost:9545"
+          "http://localhost:8545"
         );
         const web3 = new Web3(provider);
         console.log("No web3 instance injected, using Local web3.");
@@ -41,13 +44,13 @@ const getWeb3 = () => {
 
 
 const getContracts = async web3 => {
-  const chainId = await web3.eth.getChainId();
+ // const chainId = await web3.eth.getChainId();
   // console.log("ds getContracts -  ChainID :" + chainId);
   const networkId = await web3.eth.net.getId();
-
-  //  console.log("ds getContracts -  Network Id :" + networkId);
+  // console.log("ds getContracts -  ChainID :" + chainId);
+    console.log("ds getContracts -  Network Id :" + networkId);
   const deployedNetwork = BagMain.networks[networkId];
-  // console.log("ds getContracts - deployed Network :" + deployedNetwork);
+   console.log("ds getContracts - deployed Network :" + deployedNetwork);
   if (deployedNetwork) console.log("ds getContracts - address :" + deployedNetwork.address);
 
   const bagMain = new web3.eth.Contract(
@@ -75,11 +78,6 @@ const getContracts = async web3 => {
   //return { bagMain , ...tokenContracts };
   return { bagMain };
 }
-
-
-
-
-
 
 const getNetworkId = async web3 => {
   const r = await web3.eth.net.getId();

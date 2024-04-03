@@ -144,7 +144,7 @@ function Bags({bags, showCreate, showDeposit, closeSplit,withDraw, addrUser, net
  //if (document.querySelector("#btn-connect"))document.querySelector("#btn-connect").removeAttribute("disabled");
 
   useEffect(()=>{
-      if (network!="11155111" && network!="1337")
+      if (network!="11155111" && network!="1337" && network!="31337")
       {
         if (document.querySelector("#btnDeposit")) document.querySelector("#btnDeposit").setAttribute("disabled", "");
         if ( document.querySelector("#btnCreate")) document.querySelector("#btnCreate").setAttribute("disabled", "");
