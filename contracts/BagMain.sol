@@ -24,11 +24,9 @@ contract BagMain{
         mapping(bytes32 => BagStruct.Token) public tokens;
         bytes32[] public tokenList;
 
-        event TipVaultCreated(address indexed _from, address _addr);
-        event TipVaultDeposit(address indexed _from, address _addr, uint _value);
-        event TipVaultClosed(address indexed _from, address _addr);
-        event TipVaultWithdraw(address indexed _from);
-
+        /*
+        event BagCreated(address indexed _from, address _addr);
+        */
         
         constructor(BagStruct.Token[] memory _tokens,
                     address _swapRouter){
