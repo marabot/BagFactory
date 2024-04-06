@@ -10,6 +10,7 @@ import { Helmet } from "react-helmet";
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { getContracts } from './utils.js';
+import Bag from './contracts/Bag.json';
 
 //function getSplitVault(address sbOwner) external view returns(SplitVault[] memory){       
 function App() {
@@ -20,7 +21,7 @@ function App() {
   const [web3, setWeb3] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [Network, setNetwork] = useState([]);
-
+  const [DepositAddr, setDepositAddr] = useState([]);
 
   const [MyBags, setMyBags] = useState([]);
 
@@ -47,6 +48,7 @@ function App() {
 
   /////////////////////////////    SHOW and HIDE POPUP
   const showPopupDeposit = function (addr) {
+    setDepositAddr(addr);
     setShowDeposit(true);
   }
 
@@ -70,19 +72,38 @@ function App() {
   const createComponetRender = function () {
     if (showCreate === true) {
       return (
-        <CreateBag
-          createSplit={createBag}
+        <CreateBag         
+          createBag={createBag}
           closePopupCreate={closePopupCreate}
         />
       )
     }
   }
 
+  const depositComponentRender = function (bagAddr) {
+    if (showDeposit === true) {
+      return (
+        <Deposit
+          BagAddr ={bagAddr}
+          deposit={deposit}
+          closePopupDepo={closePopupDepo}
+        />
+      )
+    }
+  }
 
-  const deposit = async (tipVaultAddr, amount) => {   
+
+  const deposit = async ( amount) => {   
     try {
-      let weiAmount = web3.utils.toWei(amount);
-      await contracts.bagMain.methods.tip(tipVaultAddr).send({ from: userAddr, value: weiAmount });
+     // let weiAmount = web3.utils.toWei(amount);
+      let weiAmount = web3.utils.toWei("0.01");
+      //let bagContract = new contract(tipVaultAddr, contracts.Bag)
+      
+      const bag = new web3.eth.Contract(
+        Bag.abi,
+        DepositAddr
+      );
+      await bag.methods.deposit(weiAmount).send({ from: userAddr});
       closePopupDepo();
 
     } catch (e) {
@@ -130,9 +151,7 @@ function App() {
         />
       )
     }
-  }
-
-  
+  } 
 
 
   const DisplayMainContent = function () {
@@ -193,6 +212,10 @@ function App() {
       setMyTips(myTips);*/
 
     }
+    if (contracts){
+      const myBags = await contracts.bagMain.methods.getAllBags().call();
+      setMyBags(myBags);
+    }    
   };
 
 
@@ -213,7 +236,7 @@ function App() {
   useEffect(() => {
 
     update();
-
+    
   }, [accounts]);
 
 
@@ -253,7 +276,7 @@ function App() {
       />
       <Row style={paddingRow}>
       
-        <Col className="col-sm-4"><div ><button id="boutMenuBag" className="btn btn-primary" style={boutonMenu} onClick={() => createBag("test")}>create Bag</button></div></Col>
+        <Col className="col-sm-4"><div ><button id="boutMenuBag" className="btn btn-primary" style={boutonMenu} onClick={() => setShowCreate(true)}>create Bag</button></div></Col>
        
       </Row>
       <Row>
@@ -266,7 +289,7 @@ function App() {
 
       </Row>
       {createComponetRender()}     
-
+      {depositComponentRender(DepositAddr)}
     </div>
   );
 }

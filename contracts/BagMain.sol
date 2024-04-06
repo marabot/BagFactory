@@ -7,6 +7,8 @@ import './Bag.sol';
 import './libraries/BagStruct.sol';
 import './libraries/TokenLib.sol';
 
+// on optimism sepolia : 0x7ed96d85a92212f89a6db78db2c4c3fc06abc24adfcf6be0c2d930af5fac1071
+
 contract BagMain{
         
         //Splits & Vaults par owner
@@ -24,9 +26,9 @@ contract BagMain{
         mapping(bytes32 => BagStruct.Token) public tokens;
         bytes32[] public tokenList;
 
-        /*
+        
         event BagCreated(address indexed _from, address _addr);
-        */
+        
         
         constructor(BagStruct.Token[] memory _tokens,
                     address _swapRouter){
@@ -62,7 +64,7 @@ contract BagMain{
 
             bagByAddr[address(newbag)] = newbag;
             allBags.push(newbag);
-            emit TipVaultCreated(msg.sender, address(newbag));
+            emit BagCreated(msg.sender, address(newbag));
             return address(newbag);
         }
 

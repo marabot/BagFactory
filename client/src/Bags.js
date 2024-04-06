@@ -20,18 +20,10 @@ function Bags({bags, showCreate, showDeposit, closeSplit,withDraw, addrUser, net
       closeSplit(id);
     }*/
     const boutDepositRender= function(bag){
-      if(bag.endTime > Date.now()/1000)
-      {
+      
         return (
           <button className="btn btn-primary" style={boutonMenu} onClick={()=>deposit(bag.addr)}>Deposit</button>
         )
-
-      }else
-      {
-        return (
-          <button className="btn btn-primary disabled" style={boutonMenu} >Closed</button>
-        )
-      }
     }
 
     const htmlButtonCloseSplit= function(bag){
@@ -54,22 +46,21 @@ function Bags({bags, showCreate, showDeposit, closeSplit,withDraw, addrUser, net
         }
       }
     }
-
  
     function displayTipVaulCard(bag){
-        const amountNotWei = bag.totalAmount/ Math.pow(10,18);
-        
+        const amountNotWei = bag.totalAmount/ Math.pow(10,18);        
         
         return (
             <div style={tipVaultCard}>
               <div style={label} >Name</div>
               <div>{bag.name}</div>
 
+              <div style={label} >Address</div>
+              <div style={adressStye}>{bag.addr}</div>
+
               <div style={label}>From</div>
               <div style={adressStye}>{bag.from}</div>
 
-              <div style={label}>Receiver</div>
-              <div style={adressStye}>{bag.receiver}</div>
             
               <div style={labelTotalAmount}>Total amount</div>
               <div  >{amountNotWei}</div>
@@ -150,7 +141,6 @@ function Bags({bags, showCreate, showDeposit, closeSplit,withDraw, addrUser, net
         if ( document.querySelector("#btnCreate")) document.querySelector("#btnCreate").setAttribute("disabled", "");
       }else
       {
-
         if ( document.querySelector("#btnCreate")) document.querySelector("#btnCreate").removeAttribute("disabled");
       }
     }      
@@ -159,17 +149,13 @@ function Bags({bags, showCreate, showDeposit, closeSplit,withDraw, addrUser, net
 
 
     return (
-      <div id="order-list" className="card">
-         <div style={header}>
-                 <div style={space}><button className="btn btn-primary" style={boutonMenuCreate} onClick={()=>create()} id="btnCreate">Create bag</button></div>         
-         </div>
+      <div id="order-list" className="card">    
           
           
           <div className="row">
             <div className="col-sm-6">              
             </div>
-                <div className={"table table-striped mb-0 order-list"}>
-                 
+                <div className={"table table-striped mb-0 order-list"}>                 
                
                 { bags.map((bag) =>
                 (                  

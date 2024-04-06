@@ -2,15 +2,15 @@
 import React, {useState} from "react";
 
 
-function NewBag({_createBag,closePopupCreate}){
+function NewBag({createBag,closePopupCreate}){
 
     const [name, setName] = useState('');
     const [receiver, setReceiver] = useState('');
 
     
 
-    const createBag = async()=>{                    
-        await _createBag(name);
+    const createBagfunct = async()=>{                    
+        await createBag(name);
     };
     
     const closePopup = function(){
@@ -34,15 +34,12 @@ function NewBag({_createBag,closePopupCreate}){
                 id="name"
                 onChange= {e=>setName(e.target.value)}       
               />
-            </div>
-           
+            </div>           
           </div>         
           
           <div className="text-right">
-             <button className="btn btn-primary" onClick={()=>createBag()}>Create SplitVault</button>
-          </div>     
-          
-        
+             <button className="btn btn-primary" onClick={()=>createBagfunct()}>Create SplitVault</button>
+          </div>
       </div>
     );
 }
