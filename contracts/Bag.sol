@@ -82,8 +82,8 @@ contract Bag{
             uint amount = IERC20(tokensByTick[tokenList[i]].tokenAddress).balanceOf(address(this));
             swapExactInputSingle(amount, tokensByTick[tokenList[i]].tokenAddress,weth,0);
           }
+          TransferHelper.safeTransferFrom(weth, address(this), msg.sender,  IERC20(weth).balanceOf(address(this)));
         }          
-
    
         function applyStrategie() internal  {
             
