@@ -7,9 +7,9 @@ import './libraries/BagStruct.sol';
 import './libraries/TokenLib.sol';
 
 import {AggregatorV3Interface} from  "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
 import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
+
 import "hardhat/console.sol";
 
 contract Bag{
@@ -127,14 +127,12 @@ contract Bag{
         }
 
         function sellOverweightTokens( bool[] memory _soldTokens) internal {
-            uint8 soldtokensindex = 0;    
-
+          
             for (uint i = 0 ; i < tokenList.length;i++)
             {   
                 if (tokenHoldingUSDC[i]>averageUSDC){
                     if (tokenHoldingUSDC[i]- averageUSDC > (averageUSDC/10)){
-                        uint256 amountUSD = averageUSDC/20;
-                        uint256 amountIn = amountUSD * prices[i];
+                        uint256 amountUSD = averageUSDC/20;                     
                         uint256 amountOut = (amountUSD /  wethPrice * (10**8))*50/100;      
 
                         swapExactInputSingle(tokenHolding[i]/20,tokensByTick[tokenList[i]].tokenAddress,weth, amountOut);
@@ -233,15 +231,6 @@ contract Bag{
             applyStrategie();  
         }  
 
-        function logs() internal {
-          
-            console.log("token 1 : %s", tokensByTick[tokenList[0]].tokenAddress);
-            console.log("token 2 : %s", tokensByTick[tokenList[1]].tokenAddress);           
-
-           /* console.log("tokenHolding 1:", tokenHoldingUSDC[0]);
-            console.log("tokenHolding 2:", tokenHolding[1]);
-            console.log("tokenHolding 3:", prices[0]);*/
-        }    
 
         function removeToken (
             bytes32 _ticker)           

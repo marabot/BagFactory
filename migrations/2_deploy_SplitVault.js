@@ -9,6 +9,7 @@ const DAI = web3.utils.fromAscii('DAI');
 
 module.exports = async function (deployer, _network, accounts) {
 
+
     const eth = 10^18;
     const [ trader1, trader2, trader3,trader4,_]= accounts;   
 
@@ -31,6 +32,7 @@ module.exports = async function (deployer, _network, accounts) {
     const DAIAddr = "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1";
     const LINKAddrr = "0x350a791bfc2c21f9ed5d10980dad2e2638ffa7f6";
 */
+   
 
     // Optimism sepolia addresses
     const swaprouter = "0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E";

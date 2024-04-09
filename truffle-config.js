@@ -1,6 +1,7 @@
 const path = require("path");
 require('dotenv').config();
 const HDWalletProvider = require('@truffle/hdwallet-provider');
+const ether = require("@openzeppelin/test-helpers/src/ether");
 
 module.exports = {
   // See <http://truffleframework.com/docs/advanced/configuration>
@@ -67,11 +68,18 @@ module.exports = {
       process.env.PRIVATE_KEY_FORK_OPT,
       process.env.ALCHEMY_URL_OPTIMISM_SEPOLIA
     ),
-    network_id: 11155420,
-    gas: 6000000            
-    }
-    ,
-
+   
+    network_id: 11155420,    
+    gasPrice: 200000000 
+    },
+    optimismGoerli: {
+      provider: ()=> new HDWalletProvider(
+        process.env.PRIVATE_KEY_FORK_OPT,
+        process.env.ALCHEMY_URL_OPTIMISM_GOERLI
+      ),
+      network_id: 420,
+      gas: 6000000,
+    },
     development: {
       provider: ()=> new HDWalletProvider(
         process.env.PRIVATE_KEY_FORK_OPT,
