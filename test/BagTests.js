@@ -9,7 +9,6 @@ const Side = artifacts.require('mocks/Side.sol');
 const TokenLib = artifacts.require('libraries/TokenLib.sol');
 const WETH = artifacts.require('mocks/WETH9.sol');
 
-const SwapRouterMock = artifacts.require('mocks/SwapRouterMock.sol');
 
 const swaprouter = "0xE592427A0AEce92De3Edee1F18E0157C05861564";
 const WETHAddr = "0x4200000000000000000000000000000000000006";
@@ -25,7 +24,7 @@ let wethInstance;
 let DaiInstance;
 
 contract('BagFactory', accounts => {
-    let dai, pep, side, olas, _bagMain;
+    let _bagMain;
     const [trader1, trader2, trader3, trader4, trader5] = [accounts[0], accounts[1], accounts[2], accounts[3], accounts[4], accounts[5]];
 
     let tokens = [
@@ -41,7 +40,7 @@ contract('BagFactory', accounts => {
         // Lier la bibliothèque au contrat BagMain
         //await BagMain.link("TokenLib", tokenlib.address); 
         BagMain.link(tokenlib);
-        _bagMain = await BagMain.new(tokens, swaprouter);
+        _bagMain = await BagMain.new(tokens, swaprouter, WETHAddr);
     
         wethInstance = await WETH.at(WETHAddr);
         let amountBefore = await wethInstance.balanceOf(trader1, { from: trader1 });        
@@ -54,7 +53,7 @@ contract('BagFactory', accounts => {
         await wethInstance.deposit({ value: amount, from: trader1 });
     })
 
-    it.only('should create a bag, deposit and retire, and revert if not owner of the bag', async () => {
+    it('should create a bag, deposit and retire, and revert if not owner of the bag', async () => {
       
         await _bagMain.createBag('babag !', { from: trader1 });
         let allSB = await _bagMain.getAllBags();       
@@ -98,7 +97,9 @@ contract('BagFactory', accounts => {
         DAiBagAfterDeposit = await DaiInstance.balanceOf(allSB[0].addr);
         LinkBagAfterDeposit = await LINKInstance.balanceOf(allSB[0].addr); 
         AAVEBagAfterDeposit = await AAVEInstance.balanceOf(allSB[0].addr); 
-
+        assert(DAiBagAfterDeposit< web3.utils.toWei('0.0001'));
+        assert(LinkBagAfterDeposit< web3.utils.toWei('0.0001'));
+        assert(AAVEBagAfterDeposit< web3.utils.toWei('0.0001'));
         /*
         console.log("result after retire :");
         console.log(web3.utils.fromWei(wethAfterDeposit));       
@@ -109,7 +110,7 @@ contract('BagFactory', accounts => {
 
     }, 'Failed Test : create bag, deposit and retire');
 
-    it('should add Token and remove Token, and revert if not owner of the bag', async () => {
+    it.only('should add Token and remove Token, and revert if not owner of the bag', async () => {
 
         // create Bag
         await _bagMain.createBag('babag !', { from: trader1 });
@@ -140,7 +141,7 @@ contract('BagFactory', accounts => {
         
         // Test AddToken
         tokenTickToAdd = stringToBytes32("BAL"); 
-        tokenAddressToAdd =  "0xba100000625a3754423978a60c9317c58a424e3d"
+       
         await bag.addToken(stringToBytes32("AAVE"),AAVEAddr, oracleAAVE);
         let tokensAfterAdd = await bag.getTokens();
         assert(tokensAfterAdd.length == 3);

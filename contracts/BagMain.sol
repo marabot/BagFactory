@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 pragma abicoder v2;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import "@openzeppelin/contracts/proxy/Clones.sol";
 import './Bag.sol';
 import './libraries/BagStruct.sol';
 import './libraries/TokenLib.sol';
@@ -12,7 +13,7 @@ import './libraries/TokenLib.sol';
 contract BagMain{
         
         //Splits & Vaults par owner
-      
+
         mapping(address=> address[]) bagsByOwner;     
     
         mapping(address =>Bag) bagByAddr;
@@ -21,7 +22,9 @@ contract BagMain{
                                    
         address admin;       
         address swapRouter;
+        address weth;
         
+        address BagImpl;
         // Tokens
         mapping(bytes32 => BagStruct.Token) public tokens;
         bytes32[] public tokenList;
@@ -31,10 +34,12 @@ contract BagMain{
         
         
         constructor(BagStruct.Token[] memory _tokens,
-                    address _swapRouter){
+                    address _swapRouter, 
+                    address _wethAddr){
             admin= msg.sender;     
             swapRouter = _swapRouter;
-           
+            weth = _wethAddr;
+            BagImpl = address(new Bag());
 
             for(uint i=0;i<_tokens.length;i++)
             {                
@@ -56,16 +61,16 @@ contract BagMain{
                 tokenChainLinkAddress[i] = tokens[tokenList[i]].chainLinkAddress;                        
             }
 
-           
-            Bag newbag = new Bag(_name,msg.sender, address(this), tokensTickers,tokensAddress,tokenChainLinkAddress, swapRouter);
+            address newbagAddr = Clones.clone(BagImpl);          
 
-            address[] storage tp = bagsByOwner[msg.sender];
-            tp.push(address(newbag));
+            Bag(newbagAddr).initialize(_name, msg.sender, address(this), tokensTickers, tokensAddress, tokenChainLinkAddress, swapRouter, weth);
 
-            bagByAddr[address(newbag)] = newbag;
-            allBags.push(newbag);
-            emit BagCreated(msg.sender, address(newbag));
-            return address(newbag);
+            //Bag newbag = new Bag(_name,msg.sender, address(this), tokensTickers,tokensAddress,tokenChainLinkAddress, swapRouter);
+
+            bagByAddr[newbagAddr] =  Bag(newbagAddr);
+            allBags.push( Bag(newbagAddr));
+            emit BagCreated(msg.sender, newbagAddr);
+            return newbagAddr;
         }
 
         function getBagsFromOwner(address _owner) external view returns (address[] memory){                      

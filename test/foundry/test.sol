@@ -24,7 +24,7 @@ contract BagmainTest is Test, HelperContract{
     address constant swaprouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
 
     function setUp() public {
-        bagmain = new BagMain(new BagStruct.Token[](0),swaprouter);
+        bagmain = new BagMain(new BagStruct.Token[](0),swaprouter, wethAddr);
         //vm.prank(bob);
         vm.deal(bob, 100);
         IWETH(wethAddr).deposit(10);

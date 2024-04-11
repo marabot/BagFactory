@@ -5,6 +5,7 @@ pragma abicoder v2;
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import './libraries/BagStruct.sol';
 import './libraries/TokenLib.sol';
+import "@openzeppelin/contracts-upgradeable-4.7.3/proxy/utils/Initializable.sol";
 
 import {AggregatorV3Interface} from  "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
@@ -12,11 +13,12 @@ import '@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol';
 
 import "hardhat/console.sol";
 
-contract Bag{
+contract Bag is Initializable{
 
         // make router inherit instead of a constructor parameter
         address public swapRouter;
-        address public weth = 0x4200000000000000000000000000000000000006;
+        // address public weth = 0x4200000000000000000000000000000000000006;
+        address public weth;
         string name;
         uint totalAmount;  
       
@@ -41,7 +43,7 @@ contract Bag{
         address BagMainAddr;  
                 
         ////////// CONSTRUCTOR ////////////
-        constructor( 
+      /*  constructor( 
             string memory _name,
             address _from,
             address _bagMain,
@@ -65,9 +67,37 @@ contract Bag{
             tokenHoldingUSDC = new uint256[](tokenList.length);  
             swapRouter = _swapRouter;   
           }             
+        */
+
+         ////////// CONSTRUCTOR ////////////
+        function initialize(string memory _name,
+                    address _from,
+                    address _bagMain,
+                    bytes32[] memory _tokensTickers,
+                    address[] memory _tokensAddress,
+                    address[] memory _chainlinkAddr,
+                    address _swapRouter, 
+                    address _weth)
+                public initializer{
+                    for(uint i=0;i<_tokensTickers.length;i++)
+                    {                
+                        tokensByTick[_tokensTickers[i]] = BagStruct.Token(_tokensTickers[i], _tokensAddress[i],_chainlinkAddr[i]);
+                        tokensByAddress[_tokensAddress[i]] = BagStruct.Token(_tokensTickers[i], _tokensAddress[i],_chainlinkAddr[i]);
+                        tokenList.push(_tokensTickers[i]);     
+                        dataFeeds[_tokensTickers[i]] = AggregatorV3Interface(_chainlinkAddr[i]);                         
+                    }
+                    owner= _from;            
+                    name = _name; 
+                    BagMainAddr = _bagMain; 
+                    tokenHolding = new uint256[](tokenList.length);
+                    tokenHoldingUSDC = new uint256[](tokenList.length);  
+                    swapRouter = _swapRouter;   
+                    weth = _weth;
+          }             
         
-        
-        function deposit(uint256 _amount) external payable onlyOwner {
+        function deposit(uint256 _amount) external  onlyOwner {
+           console.log("sender",msg.sender);
+            console.log("weth", weth);
            require(IERC20(weth).balanceOf(msg.sender) >= _amount,"not enough minerals !");          
         
            TransferHelper.safeTransferFrom(weth, msg.sender, address(this), _amount);        
@@ -75,7 +105,7 @@ contract Bag{
            applyStrategie();          
         }        
 
-        function retire() external payable onlyOwner {           
+        function retire() external  onlyOwner {           
           // sell all tokens        
           for (uint i = 0 ; i < tokenList.length;i++)
           {
@@ -185,14 +215,14 @@ contract Bag{
                     sqrtPriceLimitX96: 0
                 });
 
-            /* console.log(
+             console.log(
                             "amount in  %s  %s from  %s",
                             _amountIn,
                             _tokenToBuy,
                             _tokenToSell
                         );
 
-            */
+            
             // The call to `exactInputSingle` executes the swap.
             amountOut = ISwapRouter(swapRouter).exactInputSingle(params);          
         }       
@@ -228,7 +258,7 @@ contract Bag{
 
             dataFeeds[_ticker] = AggregatorV3Interface(_chainLinkAddress);
 
-            applyStrategie();  
+            if (IERC20(weth).balanceOf(address(this))>0)applyStrategie(); 
         }  
 
 
@@ -257,15 +287,15 @@ contract Bag{
              console.log("bal weth to buy :", IERC20(weth).balanceOf(address(this)));
             tokensByAddress[tokensByTick[_ticker].tokenAddress] = BagStruct.Token(0x0, address(0), address(0));
             tokensByTick[_ticker] = BagStruct.Token(0x0, address(0), address(0));
-            applyStrategie();    
+            if (IERC20(weth).balanceOf(address(this))>0)applyStrategie();    
         }  
-               
-        fallback() external payable {
+               /*
+        fallback() external  {
             //require(msg.data.length == 0);
         }
 
-        receive() external payable {}
-        
+        receive() external  {}
+        */
         // TODO : retourner plus d'infos sur la composition du bag
         function getBag() external view returns(BagStruct.Bag memory){
             return BagStruct.Bag(address(this),  name, owner, totalAmount);
