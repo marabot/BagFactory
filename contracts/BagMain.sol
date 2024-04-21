@@ -49,7 +49,7 @@ contract BagMain{
         }
 
         // TODO prendre en paramètres une liste de token et TOP combien avoir pour composition du bag  
-        function createBag(string memory _name) payable external returns(address){      
+        function createBag(string memory _name, uint8 _treshold) payable external returns(address){      
          
             bytes32[] memory tokensTickers = new bytes32[](tokenList.length);
             address[] memory tokensAddress = new address[](tokenList.length);
@@ -63,7 +63,7 @@ contract BagMain{
 
             address newbagAddr = Clones.clone(BagImpl);          
 
-            Bag(newbagAddr).initialize(_name, msg.sender, address(this), tokensTickers, tokensAddress, tokenChainLinkAddress, swapRouter, weth);
+            Bag(newbagAddr).initialize(_name, msg.sender, address(this), tokensTickers, tokensAddress, tokenChainLinkAddress, swapRouter, weth, uint8(_treshold));
 
             //Bag newbag = new Bag(_name,msg.sender, address(this), tokensTickers,tokensAddress,tokenChainLinkAddress, swapRouter);
 

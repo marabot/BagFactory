@@ -16,8 +16,7 @@ import "hardhat/console.sol";
 contract Bag is Initializable{
 
         // make router inherit instead of a constructor parameter
-        address public swapRouter;
-        // address public weth = 0x4200000000000000000000000000000000000006;
+        address public swapRouter;        
         address public weth;
         string name;
         uint totalAmount;  
@@ -37,39 +36,13 @@ contract Bag is Initializable{
         uint256 wethPrice;
         uint256 balWETH;
         uint256 totalAmountUSDC;
-        uint256 averageUSDC;   
+        uint256 averageUSDC; 
+        uint8 treshold;  
 
         address owner; 
         address BagMainAddr;  
-                
-        ////////// CONSTRUCTOR ////////////
-      /*  constructor( 
-            string memory _name,
-            address _from,
-            address _bagMain,
-            bytes32[] memory _tokensTickers,
-            address[] memory _tokensAddress,
-            address[] memory _chainlinkAddr,
-            address _swapRouter
-            
-             ){
-            for(uint i=0;i<_tokensTickers.length;i++)
-            {                
-                tokensByTick[_tokensTickers[i]] = BagStruct.Token(_tokensTickers[i], _tokensAddress[i],_chainlinkAddr[i]);
-                tokensByAddress[_tokensAddress[i]] = BagStruct.Token(_tokensTickers[i], _tokensAddress[i],_chainlinkAddr[i]);
-                tokenList.push(_tokensTickers[i]);     
-                dataFeeds[_tokensTickers[i]] = AggregatorV3Interface(_chainlinkAddr[i]);                         
-            }
-            owner= _from;            
-            name = _name; 
-            BagMainAddr = _bagMain; 
-            tokenHolding = new uint256[](tokenList.length);
-            tokenHoldingUSDC = new uint256[](tokenList.length);  
-            swapRouter = _swapRouter;   
-          }             
-        */
-
-         ////////// CONSTRUCTOR ////////////
+                    
+       
         function initialize(string memory _name,
                     address _from,
                     address _bagMain,
@@ -77,7 +50,9 @@ contract Bag is Initializable{
                     address[] memory _tokensAddress,
                     address[] memory _chainlinkAddr,
                     address _swapRouter, 
-                    address _weth)
+                    address _weth,     // weth address 
+                    uint8 _treshold   // treshold in % of avrage Holding Value to rebalance
+                    )
                 public initializer{
                     for(uint i=0;i<_tokensTickers.length;i++)
                     {                
@@ -93,11 +68,12 @@ contract Bag is Initializable{
                     tokenHoldingUSDC = new uint256[](tokenList.length);  
                     swapRouter = _swapRouter;   
                     weth = _weth;
+                    treshold = _treshold;
           }             
         
         function deposit(uint256 _amount) external  onlyOwner {
-           console.log("sender",msg.sender);
-            console.log("weth", weth);
+          /* console.log("sender",msg.sender);
+           console.log("weth", weth);*/
            require(IERC20(weth).balanceOf(msg.sender) >= _amount,"not enough minerals !");          
         
            TransferHelper.safeTransferFrom(weth, msg.sender, address(this), _amount);        
@@ -112,25 +88,37 @@ contract Bag is Initializable{
             uint amount = IERC20(tokensByTick[tokenList[i]].tokenAddress).balanceOf(address(this));
             swapExactInputSingle(amount, tokensByTick[tokenList[i]].tokenAddress,weth,0);
           }
-          TransferHelper.safeTransferFrom(weth, address(this), msg.sender,  IERC20(weth).balanceOf(address(this)));
+          TransferHelper.safeTransferFrom(weth, address(this), owner,  IERC20(weth).balanceOf(address(this)));
         }          
    
+        function rebalanceIfNeeded() external returns (bool){
+            applyStrategie();
+            return true;
+        }
+
         function applyStrategie() internal  {
             
             prices = getPrices();
             wethPrice = TokenLib.getWethPrice(); 
+            console.log("weth price :"); 
+            console.log(wethPrice); 
             bool[] memory soldTokens = new bool[](tokenList.length);
             uint256 part;       
             totalAmountUSDC = 0;
+             
+           
 
             updateHoldingtokensValue();
  
-            averageUSDC = totalAmountUSDC / tokenList.length;          
+            averageUSDC = totalAmountUSDC / tokenList.length;   
+            
 
             sellOverweightTokens(soldTokens);           
 
             balWETH = IERC20(weth).balanceOf(address(this));
-            
+            console.log("weth balance after sell :");       
+            console.log(balWETH); 
+
             uint256 soldTokensCount = 0;
              for (uint i = 0 ; i < soldTokens.length;i++)
             {
@@ -138,10 +126,16 @@ contract Bag is Initializable{
             }
 
             part = balWETH / (tokenList.length - soldTokensCount);
-            
-            BuytokensWithWeth(soldTokens, part);   
+            console.log("test3"); 
+            console.log(balWETH); 
+            console.log(part); 
+
+            if (IERC20(weth).balanceOf(address(this))>1000) BuytokensWithWeth(soldTokens, part);   
+
+            console.log("test3"); 
 
             updateHoldingtokensValue();        
+
            // logTokens();
         }        
 
@@ -160,15 +154,15 @@ contract Bag is Initializable{
           
             for (uint i = 0 ; i < tokenList.length;i++)
             {   
-                if (tokenHoldingUSDC[i]>averageUSDC){
-                    if (tokenHoldingUSDC[i]- averageUSDC > (averageUSDC/10)){
-                        uint256 amountUSD = averageUSDC/20;                     
-                        uint256 amountOut = (amountUSD /  wethPrice * (10**8))*50/100;      
+              //  if (tokenHoldingUSDC[i]>averageUSDC){
+                    if (tokenHoldingUSDC[i] > averageUSDC + (averageUSDC * treshold /100)){                   
+                        uint256 amountUSD = (averageUSDC * treshold /100);                     
+                        uint256 amountOut = (amountUSD /  wethPrice * (10**8))*98/100;      
 
-                        swapExactInputSingle(tokenHolding[i]/20,tokensByTick[tokenList[i]].tokenAddress,weth, amountOut);
+                        swapExactInputSingle((tokenHolding[i] * treshold / 100),tokensByTick[tokenList[i]].tokenAddress,weth, amountOut);
                         _soldTokens[i] = true;                        
                     }
-                }            
+              //  }            
             }          
         }          
 
@@ -179,16 +173,14 @@ contract Bag is Initializable{
                if (!_soldTokens[i]){
                     uint256 amountOut = _part *98/100;
                    
-                    swapExactInputSingle(_part, weth, tokensByTick[tokenList[i]].tokenAddress,  amountOut);
+                    swapExactInputSingle((_part -1), weth, tokensByTick[tokenList[i]].tokenAddress,  amountOut);
                }
             }
         }          
 
-        function getPrices() internal view returns (uint256[] memory _prices){
-                       
+        function getPrices() public view returns (uint256[] memory _prices){                       
             _prices= new uint256[](tokenList.length);
-            for (uint8 i =0;i<tokenList.length;i++){
-              
+            for (uint8 i =0;i<tokenList.length;i++){              
                 _prices[i] = TokenLib.getChainlinkDataFeedLatestAnswer(tokenList[i], dataFeeds[tokenList[i]]);               
             }
         }
@@ -258,7 +250,7 @@ contract Bag is Initializable{
 
             dataFeeds[_ticker] = AggregatorV3Interface(_chainLinkAddress);
 
-            if (IERC20(weth).balanceOf(address(this))>0)applyStrategie(); 
+            if (IERC20(weth).balanceOf(address(this))>1)applyStrategie(); 
         }  
 
 
@@ -284,18 +276,12 @@ contract Bag is Initializable{
 
             tokenHolding = new uint256[](tokenList.length);
             tokenHoldingUSDC = new uint256[](tokenList.length);  
-             console.log("bal weth to buy :", IERC20(weth).balanceOf(address(this)));
+            // console.log("bal weth to buy :", IERC20(weth).balanceOf(address(this)));
             tokensByAddress[tokensByTick[_ticker].tokenAddress] = BagStruct.Token(0x0, address(0), address(0));
             tokensByTick[_ticker] = BagStruct.Token(0x0, address(0), address(0));
             if (IERC20(weth).balanceOf(address(this))>0)applyStrategie();    
         }  
-               /*
-        fallback() external  {
-            //require(msg.data.length == 0);
-        }
-
-        receive() external  {}
-        */
+       
         // TODO : retourner plus d'infos sur la composition du bag
         function getBag() external view returns(BagStruct.Bag memory){
             return BagStruct.Bag(address(this),  name, owner, totalAmount);

@@ -39,7 +39,7 @@ contract BagmainTest is Test, HelperContract{
 
     function test_createabagWithAccount1() public {
         vm.prank(bob);
-        address payable bagAddr = payable(bagmain.createBag("test bag"));  
+        address payable bagAddr = payable(bagmain.createBag("test bag", 10));  
         console.log("bag address : " ,bagAddr);
         Bag  bag = Bag(bagAddr);
         bag.deposit(10);
